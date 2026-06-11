@@ -1,10 +1,19 @@
 import time
 
-from httpx2 import AsyncClient
+from httpx2 import AsyncClient, HTTPStatusError
 from jira import JIRA, Issue
+from jira.exceptions import JIRAError
 
 from mcp_server.application.ports import ICollaborationToolPort, ITokenStoragePort
-from mcp_server.domain import JiraTask
+from mcp_server.domain import (
+    JiraTask,
+    IssueNotFoundException,
+    JiraApiException,
+    JiraAuthenticationException,
+    JiraUserNotFoundException,
+    TokenRefreshException,
+    UserTokensNotFoundException,
+)
 
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 
@@ -39,18 +48,25 @@ class JiraAdapter(ICollaborationToolPort):
 
     async def _refresh_tokens(self, user_id: str, refresh_token: str) -> dict:
         """Exchange a refresh token for a new access token via Atlassian OAuth 2.0."""
-        async with AsyncClient() as client:
-            response = await client.post(
-                ATLASSIAN_TOKEN_URL,
-                json={
-                    "grant_type": "refresh_token",
-                    "client_id": self.__client_id,
-                    "client_secret": self.__client_secret,
-                    "refresh_token": refresh_token,
-                },
-            )
-            response.raise_for_status()
-            data: dict = response.json()
+        try:
+            async with AsyncClient() as client:
+                response = await client.post(
+                    ATLASSIAN_TOKEN_URL,
+                    json={
+                        "grant_type": "refresh_token",
+                        "client_id": self.__client_id,
+                        "client_secret": self.__client_secret,
+                        "refresh_token": refresh_token,
+                    },
+                )
+                response.raise_for_status()
+                data: dict = response.json()
+        except HTTPStatusError as exc:
+            if exc.response.status_code == 401:
+                raise JiraAuthenticationException(user_id) from exc
+            raise TokenRefreshException(user_id, str(exc)) from exc
+        except Exception as exc:
+            raise TokenRefreshException(user_id, str(exc)) from exc
 
         new_tokens = {
             "access_token": data["access_token"],
@@ -69,13 +85,18 @@ class JiraAdapter(ICollaborationToolPort):
         """Build a JIRA client, refreshing the token if expired."""
         tokens = await self.__token_storage.get_tokens(user_id)
         if tokens is None:
-            raise ValueError(f"No tokens found for user: {user_id}")
+            raise UserTokensNotFoundException(user_id)
 
         if tokens["expires_at"] <= int(time.time()) + 60:
             tokens = await self._refresh_tokens(user_id, tokens["refresh_token"])
 
-        return JIRA(server=self.__server_url, token_auth=tokens["access_token"])
-    
+        try:
+            return JIRA(server=self.__server_url, token_auth=tokens["access_token"])
+        except JIRAError as exc:
+            if exc.status_code == 401:
+                raise JiraAuthenticationException(user_id) from exc
+            raise JiraApiException(str(exc), status_code=exc.status_code) from exc
+
     def __issue_to_domain_model(self, issue: Issue) -> JiraTask:
         """Convert a JIRA Issue to a JiraTask domain model."""
         return JiraTask(
@@ -85,16 +106,26 @@ class JiraAdapter(ICollaborationToolPort):
             url=f"{self.__server_url}/browse/{issue.key}",
             status=issue.fields.status.name,
             priority=issue.fields.priority.name if issue.fields.priority else None,
-            project=issue.fields.project.name
+            project=issue.fields.project.name,
         )
 
-    async def get_issue(self, issue_id: str, user_id: str):
+    async def get_issue(self, issue_id: str, user_id: str) -> JiraTask:
         jira = await self._get_client(user_id)
-        issue = jira.issue(issue_id)
+        try:
+            issue = jira.issue(issue_id)
+        except JIRAError as exc:
+            if exc.status_code == 404:
+                raise IssueNotFoundException(issue_id) from exc
+            raise JiraApiException(str(exc), status_code=exc.status_code) from exc
         return self.__issue_to_domain_model(issue)
-    
-    async def get_pending_issues(self, user_id: str, assignee: str) -> tuple[JiraTask]:
+
+    async def get_pending_issues(self, user_id: str, assignee: str) -> tuple[JiraTask, ...]:
         jira = await self._get_client(user_id)
         jql = f'assignee = "{assignee}" AND status IN ("To Do", "In Progress")'
-        issues = jira.search_issues(jql)
+        try:
+            issues = jira.search_issues(jql)
+        except JIRAError as exc:
+            if "does not exist" in str(exc).lower() or exc.status_code == 400:
+                raise JiraUserNotFoundException(assignee) from exc
+            raise JiraApiException(str(exc), status_code=exc.status_code) from exc
         return tuple(self.__issue_to_domain_model(issue) for issue in issues)
