@@ -55,3 +55,9 @@ class JiraAdapter(ICollaborationToolPort):
         jira = await self._get_client(user_id)
         issue = jira.issue(issue_id)
         return self.__issue_to_domain_model(issue)
+    
+    async def get_pending_issues(self, user_id: str, assignee: str) -> set[JiraTask]:
+        jira = await self._get_client(user_id)
+        jql = f'assignee = "{assignee}" AND status IN ("To Do", "In Progress")'
+        issues = jira.search_issues(jql)
+        return {self.__issue_to_domain_model(issue) for issue in issues}
