@@ -22,5 +22,6 @@ What NOT to put here:
 from .adapters import *
 
 __all__ = [
-    "SQLiteTokenStorageAdapter",
+    "SQLiteTokenStorage",
+    "JiraAdapter",
 ]

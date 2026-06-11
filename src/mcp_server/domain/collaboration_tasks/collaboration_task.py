@@ -11,7 +11,7 @@ class CollaborationTask(BaseModel, ABC):
     description: str = Field(description="Detailed description of the collaboration task")
     title: str = Field(description="Title of the collaboration task")
     status: str = Field(description="Current status of the collaboration task", examples=["pending", "in_progress", "completed"])
-    priority: str = Field(description="Priority level of the collaboration task", examples=["low", "medium", "high"])
+    priority: str | None = Field(description="Priority level of the collaboration task", examples=["low", "medium", "high"])
     project: str = Field(description="Project associated with the collaboration task")
     url: str = Field(description="URL to the collaboration task in the external tool")
     collaboration_tool: CollaborationToolEnum = Field(description="Name of the collaboration tool", examples=["JIRA", "TRELLO"])

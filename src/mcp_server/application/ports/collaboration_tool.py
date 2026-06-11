@@ -5,5 +5,5 @@ class ICollaborationToolPort(ABC):
     """Interface for the Collaboration Tool Port."""
 
     @abstractmethod
-    async def get_issue(issue_id: str):
+    async def get_issue(issue_id: str, user_id: str):
         pass #TODO: Update method return value
