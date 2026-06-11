@@ -14,3 +14,9 @@ What NOT to put here:
       the service stays testable with fakes/mocks.
     - Core business invariants that belong in the ``domain`` layer.
 """
+
+from .collaboration_tool_integration_service import CollaborationToolIntegrationService
+
+__all__ = [
+    "CollaborationToolIntegrationService",
+]

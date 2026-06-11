@@ -15,3 +15,9 @@ What NOT to put here:
       these abstractions, not the other way around).
     - Any framework, SDK, or IO code.
 """
+
+from .collaboration_tool import ICollaborationToolPort
+
+__all__ = [
+    "ICollaborationToolPort"
+]

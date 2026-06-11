@@ -19,3 +19,13 @@ What NOT to put here:
     - Concrete IO, transport, framework, or third-party SDK code (those live in
       ``infrastructure`` as adapters).
 """
+
+from .service_interfaces import ICollaborationToolIntegrationService
+from .services import CollaborationToolIntegrationService
+from .ports import ICollaborationToolPort
+
+__all__ = [
+    "ICollaborationToolIntegrationService",
+    "CollaborationToolIntegrationService",
+    "ICollaborationToolPort",
+]
