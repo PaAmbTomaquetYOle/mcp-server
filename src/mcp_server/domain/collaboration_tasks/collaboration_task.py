@@ -8,7 +8,7 @@ class CollaborationTask(BaseModel, ABC):
     """Represents a task related to collaboration tool integration."""
 
     task_id: str = Field(description="Unique identifier for the collaboration task")
-    description: str = Field(description="Detailed description of the collaboration task")
+    description: str | None = Field(description="Detailed description of the collaboration task")
     title: str = Field(description="Title of the collaboration task")
     status: str = Field(description="Current status of the collaboration task", examples=["pending", "in_progress", "completed"])
     priority: str | None = Field(description="Priority level of the collaboration task", examples=["low", "medium", "high"])
