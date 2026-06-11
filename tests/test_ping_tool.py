@@ -1,9 +1,7 @@
 import pytest
 from mcp.server import FastMCP
 
-from mcp_server.infrastructure.controllers.tools.ping_controller import (
-    PingToolController,
-)
+from mcp_server.infrastructure.controllers.tools import PingToolController
 from tests.conftest import get_tool_names
 
 

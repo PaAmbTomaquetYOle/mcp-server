@@ -5,8 +5,7 @@ import json
 import pytest
 from mcp.server import FastMCP
 
-from mcp_server.infrastructure.config.server_factory import ServerFactory
-from mcp_server.infrastructure.config.settings import McpServerSettings
+from mcp_server.infrastructure.config import McpServerSettings, ServerFactory
 
 
 @pytest.fixture(autouse=True)

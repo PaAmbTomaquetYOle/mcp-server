@@ -1,7 +1,7 @@
 import pytest
 from mcp.server import FastMCP
 
-from mcp_server.infrastructure.config.server_factory import ServerFactory
+from mcp_server.infrastructure.config import ServerFactory
 from tests.conftest import get_tool_names
 
 

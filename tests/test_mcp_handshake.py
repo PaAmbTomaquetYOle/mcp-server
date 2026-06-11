@@ -2,7 +2,7 @@ import pytest
 from mcp.server import FastMCP
 from starlette.testclient import TestClient
 
-from mcp_server.infrastructure.config.server_factory import ServerFactory
+from mcp_server.infrastructure.config import ServerFactory
 from tests.conftest import parse_sse_data
 
 
