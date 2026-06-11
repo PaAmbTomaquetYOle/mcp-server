@@ -12,8 +12,10 @@ What NOT to put here:
       request and calls an application service; the real work happens there.
 """
 
-from mcp_server.infrastructure.controllers.tools.ping_controller import (
-    PingToolController,
-)
+from .ping_controller import PingToolController
+from .extract_jira_tasks_controller import ExtractJiraTasksToolController
 
-__all__ = ["PingToolController"]
+__all__ = [
+    "PingToolController",
+    "ExtractJiraTasksToolController",
+    ]

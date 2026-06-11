@@ -1,11 +1,9 @@
-from mcp.server import FastMCP
-
+from mcp_server.infrastructure.controllers import BaseController
 from mcp_server.infrastructure.dto.tools import PingResult
 
 
-class PingToolController:
-    def __init__(self, server: FastMCP) -> None:
-        self._server = server
+class PingToolController(BaseController):
+    """Controller for the ping tool, which serves as a health-check endpoint to verify that the MCP server is reachable and responding."""
 
     def register(self) -> None:
         self._server.add_tool(

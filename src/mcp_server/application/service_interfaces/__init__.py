@@ -13,3 +13,8 @@ What NOT to put here:
     - Implementations of these interfaces (those live in ``services``).
     - Any transport, framework, or IO code.
 """
+
+from .collaboration_tool_integration_service_interface import ICollaborationToolIntegrationService
+__all__ = [
+    "ICollaborationToolIntegrationService",
+]
