@@ -1,5 +1,7 @@
 from mcp.server import FastMCP
 
+from mcp_server.infrastructure.dto.tools import PingResult
+
 
 class PingToolController:
     def __init__(self, server: FastMCP) -> None:
@@ -15,5 +17,10 @@ class PingToolController:
             ),
         )
 
-    async def ping(self) -> str:
-        return "pong"
+    async def ping(self) -> PingResult:
+        """Check server health.
+
+        Returns:
+            PingResult: A fixed 'pong' response confirming connectivity.
+        """
+        return PingResult(message="pong")
