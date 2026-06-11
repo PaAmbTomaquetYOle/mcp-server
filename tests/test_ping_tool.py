@@ -2,6 +2,7 @@ import pytest
 from mcp.server import FastMCP
 
 from mcp_server.infrastructure.controllers.tools import PingToolController
+from mcp_server.infrastructure.dto.tools import PingResult
 from tests.conftest import get_tool_names
 
 
@@ -20,4 +21,5 @@ class TestPingToolController:
 
         result = await controller.ping()
 
-        assert result == "pong"
+        assert isinstance(result, PingResult)
+        assert result.message == "pong"
