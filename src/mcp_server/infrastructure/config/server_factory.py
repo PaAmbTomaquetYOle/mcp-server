@@ -5,9 +5,7 @@ import threading
 from mcp.server import FastMCP
 
 from mcp_server.infrastructure.config.settings import McpServerSettings
-from mcp_server.infrastructure.controllers.tools.ping_controller import (
-    PingToolController,
-)
+from mcp_server.infrastructure.controllers.tools import PingToolController
 
 _INTERNAL_TOKEN = object()
 
