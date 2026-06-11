@@ -18,6 +18,6 @@ from .sqlite_token_storage import SqliteTokenStorage
 from .jira import JiraAdapter
 
 __all__ = [
-    "SQLiteTokenStorage",
+    "SqliteTokenStorage",
     "JiraAdapter",
 ]

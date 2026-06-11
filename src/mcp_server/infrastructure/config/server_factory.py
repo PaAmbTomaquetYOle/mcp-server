@@ -4,6 +4,9 @@ import threading
 
 from mcp.server import FastMCP
 
+from mcp_server.application.ports import ITokenStoragePort
+from mcp_server.application.services import CollaborationToolIntegrationService
+from mcp_server.infrastructure.adapters import JiraAdapter, SqliteTokenStorage
 from mcp_server.infrastructure.config.settings import McpServerSettings
 from mcp_server.infrastructure.controllers.tools import PingToolController, ExtractJiraTasksToolController
 
@@ -47,7 +50,25 @@ class ServerFactory:
         )
         self._register_tools(server)
         return server
+    
+    def _create_token_storage(self) -> ITokenStoragePort:
+        return SqliteTokenStorage(db_path=self._settings.jira_token_db_path)
+
+    def _create_jira_adapter(self) -> JiraAdapter:
+        return JiraAdapter(
+            server_url=self._settings.jira_server_url,
+            client_id=self._settings.jira_client_id,
+            client_secret=self._settings.jira_client_secret,
+            token_storage_port=self._create_token_storage(),
+        )
+
+    def _create_jira_service(self) -> CollaborationToolIntegrationService:
+        jira_adapter = self._create_jira_adapter()
+        jira_service = CollaborationToolIntegrationService(jira_adapter)
+        return jira_service
 
     def _register_tools(self, server: FastMCP) -> None:
         PingToolController(server).register()
-        ExtractJiraTasksToolController(server).register()
+        
+        jira_service = self._create_jira_service()
+        ExtractJiraTasksToolController(server, jira_service).register()
