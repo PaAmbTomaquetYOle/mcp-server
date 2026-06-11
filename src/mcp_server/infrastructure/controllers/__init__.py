@@ -17,3 +17,9 @@ What NOT to put here:
     - Business logic or orchestration: controllers stay thin and delegate to
       application services. Domain decisions never live in the transport layer.
 """
+
+from .base_controller import BaseController
+
+__all__ = [
+    "BaseController",
+]

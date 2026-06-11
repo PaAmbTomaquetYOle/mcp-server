@@ -5,7 +5,7 @@ import threading
 from mcp.server import FastMCP
 
 from mcp_server.infrastructure.config.settings import McpServerSettings
-from mcp_server.infrastructure.controllers.tools import PingToolController
+from mcp_server.infrastructure.controllers.tools import PingToolController, ExtractJiraTasksToolController
 
 _INTERNAL_TOKEN = object()
 
@@ -50,3 +50,4 @@ class ServerFactory:
 
     def _register_tools(self, server: FastMCP) -> None:
         PingToolController(server).register()
+        ExtractJiraTasksToolController(server).register()
