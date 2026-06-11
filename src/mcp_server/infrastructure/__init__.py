@@ -18,3 +18,9 @@ What NOT to put here:
     - Business rules or use-case orchestration (those belong to ``domain`` and
       ``application`` respectively). Keep this layer about wiring and IO only.
 """
+
+from .adapters import *
+
+__all__ = [
+    "SQLiteTokenStorageAdapter",
+]
