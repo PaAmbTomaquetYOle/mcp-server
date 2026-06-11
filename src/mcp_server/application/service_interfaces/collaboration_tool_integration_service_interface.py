@@ -7,3 +7,7 @@ class ICollaborationToolIntegrationService(ABC):
     @abstractmethod
     async def get_issue(issue_id: str):
         pass #TODO: Update method return value
+
+    @abstractmethod
+    async def get_pending_issues():
+        pass #TODO: Update method return value
