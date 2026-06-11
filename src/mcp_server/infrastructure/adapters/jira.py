@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 from httpx2 import AsyncClient, HTTPStatusError
@@ -91,7 +92,9 @@ class JiraAdapter(ICollaborationToolPort):
             tokens = await self._refresh_tokens(user_id, tokens["refresh_token"])
 
         try:
-            return JIRA(server=self.__server_url, token_auth=tokens["access_token"])
+            return await asyncio.to_thread(
+                JIRA, server=self.__server_url, token_auth=tokens["access_token"]
+            )
         except JIRAError as exc:
             if exc.status_code == 401:
                 raise JiraAuthenticationException(user_id) from exc
@@ -112,7 +115,7 @@ class JiraAdapter(ICollaborationToolPort):
     async def get_issue(self, issue_id: str, user_id: str) -> JiraTask:
         jira = await self._get_client(user_id)
         try:
-            issue = jira.issue(issue_id)
+            issue = await asyncio.to_thread(jira.issue, issue_id)
         except JIRAError as exc:
             if exc.status_code == 404:
                 raise IssueNotFoundException(issue_id) from exc
@@ -121,9 +124,10 @@ class JiraAdapter(ICollaborationToolPort):
 
     async def get_pending_issues(self, user_id: str, assignee: str) -> tuple[JiraTask, ...]:
         jira = await self._get_client(user_id)
-        jql = f'assignee = "{assignee}" AND status IN ("To Do", "In Progress")'
+        sanitized_assignee = assignee.replace("\\", "\\\\").replace('"', '\\"')
+        jql = f'assignee = "{sanitized_assignee}" AND status IN ("To Do", "In Progress")'
         try:
-            issues = jira.search_issues(jql)
+            issues = await asyncio.to_thread(jira.search_issues, jql)
         except JIRAError as exc:
             if "does not exist" in str(exc).lower() or exc.status_code == 400:
                 raise JiraUserNotFoundException(assignee) from exc
