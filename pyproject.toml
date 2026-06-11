@@ -1,10 +1,22 @@
 [project]
 name = "mcp-server"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP server to give functionalities to the agent"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "mcp>=1.27.2",
+]
+
+[project.scripts]
+mcp-server = "mcp_server.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_server"]
 
 [dependency-groups]
 dev = [
@@ -12,3 +24,13 @@ dev = [
     "httpx2>=2.4.0",
     "ruff>=0.15.16",
 ]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
