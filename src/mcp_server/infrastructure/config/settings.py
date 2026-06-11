@@ -13,3 +13,10 @@ class McpServerSettings(BaseSettings):
     port: int = 8000
     log_level: str = "INFO"
     debug: bool = False
+
+    jira_server_url: str = ""
+    jira_client_id: str = ""
+    jira_client_secret: str = ""
+    jira_redirect_uri: str = "http://localhost:8080/callback"
+    jira_cloud_id: str = ""
+    jira_token_db_path: str = "data/tokens.db"
