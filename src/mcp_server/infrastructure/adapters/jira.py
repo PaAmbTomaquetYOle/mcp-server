@@ -48,6 +48,7 @@ class JiraAdapter(ICollaborationToolPort):
             url=f"{self.__server_url}/browse/{issue.key}",
             status=issue.fields.status.name,
             priority=issue.fields.priority.name if issue.fields.priority else None,
+            project=issue.fields.project.name
         )
 
     async def get_issue(self, issue_id: str, user_id: str):
