@@ -8,6 +8,7 @@ Sub-packages:
     - ``adapters``    : driven adapters implementing ``application.ports``.
     - ``config``      : settings, environment loading, and DI/composition.
     - ``controllers`` : driving adapters (the MCP entry points).
+    - ``dto``         : Pydantic schemas for MCP operation contracts.
 
 Dependency rule:
     Infrastructure may import from ``application`` and ``domain``; those inner
