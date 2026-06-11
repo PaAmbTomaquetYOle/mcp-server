@@ -1,7 +1,12 @@
+import time
+
+from httpx2 import AsyncClient
 from jira import JIRA, Issue
 
 from mcp_server.application.ports import ICollaborationToolPort, ITokenStoragePort
 from mcp_server.domain import JiraTask
+
+ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 
 
 class JiraAdapter(ICollaborationToolPort):
@@ -32,11 +37,43 @@ class JiraAdapter(ICollaborationToolPort):
         self.__client_id = client_id
         self.__client_secret = client_secret
 
+    async def _refresh_tokens(self, user_id: str, refresh_token: str) -> dict:
+        """Exchange a refresh token for a new access token via Atlassian OAuth 2.0."""
+        async with AsyncClient() as client:
+            response = await client.post(
+                ATLASSIAN_TOKEN_URL,
+                json={
+                    "grant_type": "refresh_token",
+                    "client_id": self.__client_id,
+                    "client_secret": self.__client_secret,
+                    "refresh_token": refresh_token,
+                },
+            )
+            response.raise_for_status()
+            data: dict = response.json()
+
+        new_tokens = {
+            "access_token": data["access_token"],
+            "refresh_token": data.get("refresh_token", refresh_token),
+            "expires_at": int(time.time()) + data["expires_in"],
+        }
+        await self.__token_storage.save_tokens(
+            user_id,
+            new_tokens["access_token"],
+            new_tokens["refresh_token"],
+            new_tokens["expires_at"],
+        )
+        return new_tokens
+
     async def _get_client(self, user_id: str) -> JIRA:
-        """Build a JIRA client with the user's OAuth 2.0 access token."""
+        """Build a JIRA client, refreshing the token if expired."""
         tokens = await self.__token_storage.get_tokens(user_id)
         if tokens is None:
             raise ValueError(f"No tokens found for user: {user_id}")
+
+        if tokens["expires_at"] <= int(time.time()) + 60:
+            tokens = await self._refresh_tokens(user_id, tokens["refresh_token"])
+
         return JIRA(server=self.__server_url, token_auth=tokens["access_token"])
     
     def __issue_to_domain_model(self, issue: Issue) -> JiraTask:
