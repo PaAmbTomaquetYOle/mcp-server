@@ -11,3 +11,9 @@ What NOT to put here:
     - Business logic or use-case orchestration: the handler parses/validates the
       request and calls an application service; the real work happens there.
 """
+
+from mcp_server.infrastructure.controllers.tools.ping_controller import (
+    PingToolController,
+)
+
+__all__ = ["PingToolController"]
