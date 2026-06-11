@@ -23,10 +23,18 @@ isolation.
 
 from .enums import *
 from .collaboration_tasks import *
+from .exceptions import *
 
 __all__ = [
     "CollaborationToolEnum",
     "CollaborationTask",
     "JiraTask",
     "TrelloTask",
+    "CollaborationToolException",
+    "IssueNotFoundException",
+    "JiraApiException",
+    "JiraAuthenticationException",
+    "JiraUserNotFoundException",
+    "TokenRefreshException",
+    "UserTokensNotFoundException",
 ]
