@@ -100,6 +100,11 @@ class JiraAdapter(ICollaborationToolPort):
                 raise JiraAuthenticationException(user_id) from exc
             raise JiraApiException(str(exc), status_code=exc.status_code) from exc
 
+    @staticmethod
+    def __sanitize_jql_value(value: str) -> str:
+        """Escape backslashes and double quotes to prevent JQL injection."""
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+
     def __issue_to_domain_model(self, issue: Issue) -> JiraTask:
         """Convert a JIRA Issue to a JiraTask domain model."""
         return JiraTask(
@@ -124,8 +129,7 @@ class JiraAdapter(ICollaborationToolPort):
 
     async def get_pending_issues(self, user_id: str, assignee: str) -> tuple[JiraTask, ...]:
         jira = await self._get_client(user_id)
-        sanitized_assignee = assignee.replace("\\", "\\\\").replace('"', '\\"')
-        jql = f'assignee = "{sanitized_assignee}" AND status IN ("To Do", "In Progress")'
+        jql = f'assignee = "{self.__sanitize_jql_value(assignee)}" AND status IN ("To Do", "In Progress")'
         try:
             issues = await asyncio.to_thread(jira.search_issues, jql)
         except JIRAError as exc:
