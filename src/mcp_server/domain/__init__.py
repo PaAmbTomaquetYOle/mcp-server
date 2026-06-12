@@ -30,6 +30,7 @@ __all__ = [
     "CollaborationTask",
     "JiraTask",
     "TrelloTask",
+    "TrelloMember",
     "CollaborationToolException",
     "IssueNotFoundException",
     "JiraApiException",

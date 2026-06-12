@@ -1,9 +1,10 @@
+import asyncio
 from collections.abc import Iterable
 
-from trello import TrelloClient
+from trello import Card, Member, TrelloClient
 
 from mcp_server.application.ports import ICollaborationToolPort, ITokenStoragePort, TokenData
-from mcp_server.domain import TrelloTask
+from mcp_server.domain import TrelloMember, TrelloTask
 from mcp_server.domain.exceptions import UserTokensNotFoundException
 
 
@@ -81,8 +82,54 @@ class TrelloAdapter(ICollaborationToolPort):
         tokens = await self._get_tokens(user_id)
         return self._build_client(tokens["access_token"], tokens["refresh_token"])
 
+    @staticmethod
+    def __member_to_domain_model(member: Member) -> TrelloMember:
+        """
+        Convert a TrelloMember model into a domain model.
+
+        Args:
+            member (Member): The TrelloMember model to convert.
+        Returns:
+            TrelloMember: A domain model representing the Trello member.
+        """
+        return TrelloMember(
+            id=member.id,
+            username=member.username,
+            email=member.email
+        )
+
+    async def __card_to_domain_model(self, card: Card, user_id: str) -> TrelloTask:
+        """
+        Convert a Trello Card object to a TrelloTask domain model.
+
+        Args:
+            card (Card): The Trello Card object to convert.
+            user_id (str): The ID of the user whose tasks to retrieve.
+        Returns:
+            TrelloTask: A domain model representing the Trello task.
+        """
+        client = await self._get_client(user_id)
+
+        return TrelloTask(
+            task_id=card.id,
+            title=card.name,
+            description=card.description,
+            url=card.url,
+            due_date=card.due,
+            list_id=card.list_id,
+            board_id=card.board_id,
+            labels=[label.name for label in card.labels],
+            members=[
+                self.__member_to_domain_model(member) for member in [
+                    await asyncio.to_thread(client.get_member, member_id) for member_id in card.idMembers
+                ]
+            ]
+        )
+
     async def get_issue(self, issue_id: str, user_id: str) -> TrelloTask:
-        raise NotImplementedError("Trello issue retrieval is not implemented yet.")
+        client = await self._get_client(user_id)
+        card: Card = await asyncio.to_thread(client.get_card, issue_id)
+        return await self.__card_to_domain_model(card, user_id)
 
     async def get_pending_issues(self, user_id: str, assignee: str) -> Iterable[TrelloTask]:
         raise NotImplementedError("Trello pending issue retrieval is not implemented yet.")
