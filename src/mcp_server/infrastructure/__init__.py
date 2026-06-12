@@ -19,9 +19,10 @@ What NOT to put here:
       ``application`` respectively). Keep this layer about wiring and IO only.
 """
 
-from .adapters import *
+from .adapters import JiraAdapter, SqliteTokenStorage, TrelloAdapter
 
 __all__ = [
-    "SQLiteTokenStorage",
+    "SqliteTokenStorage",
     "JiraAdapter",
+    "TrelloAdapter",
 ]
