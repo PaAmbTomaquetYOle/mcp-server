@@ -7,10 +7,10 @@ from jira.exceptions import JIRAError
 
 from mcp_server.application.ports import ICollaborationToolPort, ITokenStoragePort
 from mcp_server.domain import (
-    JiraTask,
     IssueNotFoundException,
     JiraApiException,
     JiraAuthenticationException,
+    JiraTask,
     JiraUserNotFoundException,
     TokenRefreshException,
     UserTokensNotFoundException,
