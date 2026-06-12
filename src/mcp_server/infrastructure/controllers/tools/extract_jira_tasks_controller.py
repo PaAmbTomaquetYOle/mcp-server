@@ -4,7 +4,8 @@ from mcp.server import FastMCP
 
 from mcp_server.application.service_interfaces import ICollaborationToolIntegrationService
 from mcp_server.domain import JiraTask
-from mcp_server.infrastructure.controllers import BaseController, tool_error_handler
+from mcp_server.infrastructure.controllers.base_controller import BaseController
+from mcp_server.infrastructure.controllers.error_handler import tool_error_handler
 
 
 class ExtractJiraTasksToolController(BaseController):
