@@ -98,38 +98,39 @@ class TrelloAdapter(ICollaborationToolPort):
             email=member.email
         )
 
-    async def __card_to_domain_model(self, card: Card, user_id: str) -> TrelloTask:
+    async def __card_to_domain_model(self, card: Card, client: TrelloClient) -> TrelloTask:
         """
         Convert a Trello Card object to a TrelloTask domain model.
 
         Args:
             card (Card): The Trello Card object to convert.
-            user_id (str): The ID of the user whose tasks to retrieve.
+            client (TrelloClient): Authenticated client used to fetch related members.
         Returns:
             TrelloTask: A domain model representing the Trello task.
         """
-        client = await self._get_client(user_id)
+        members = await asyncio.gather(
+            *(asyncio.to_thread(client.get_member, member_id) for member_id in card.idMembers)
+        )
 
         return TrelloTask(
             task_id=card.id,
             title=card.name,
             description=card.description,
             url=card.url,
+            status="completed" if card.closed else "pending",
+            priority=None,
+            project=card.board.name,
             due_date=card.due,
             list_id=card.list_id,
             board_id=card.board_id,
             labels=[label.name for label in card.labels],
-            members=[
-                self.__member_to_domain_model(member) for member in [
-                    await asyncio.to_thread(client.get_member, member_id) for member_id in card.idMembers
-                ]
-            ]
+            members=[self.__member_to_domain_model(member) for member in members],
         )
 
     async def get_issue(self, issue_id: str, user_id: str) -> TrelloTask:
         client = await self._get_client(user_id)
         card: Card = await asyncio.to_thread(client.get_card, issue_id)
-        return await self.__card_to_domain_model(card, user_id)
+        return await self.__card_to_domain_model(card, client)
 
     async def get_pending_issues(self, user_id: str, assignee: str) -> Iterable[TrelloTask]:
         raise NotImplementedError("Trello pending issue retrieval is not implemented yet.")
