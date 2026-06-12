@@ -52,7 +52,7 @@ class ServerFactory:
         return server
     
     def _create_token_storage(self) -> ITokenStoragePort:
-        return SqliteTokenStorage(db_path=self._settings.jira_token_db_path)
+        return SqliteTokenStorage(db_path=self._settings.token_db_path)
 
     def _create_jira_adapter(self) -> JiraAdapter:
         return JiraAdapter(
