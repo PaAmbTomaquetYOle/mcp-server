@@ -9,6 +9,7 @@ dependencies = [
     "httpx2>=2.4.0",
     "jira>=3.10.5",
     "mcp>=1.27.2",
+    "py-trello>=0.20.1",
 ]
 
 [project.scripts]
