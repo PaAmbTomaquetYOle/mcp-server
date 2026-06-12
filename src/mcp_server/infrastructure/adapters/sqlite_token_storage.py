@@ -1,7 +1,8 @@
-import aiosqlite
 from pathlib import Path
 
-from mcp_server.application.ports.token_storage import ITokenStoragePort
+import aiosqlite
+
+from mcp_server.application.ports.token_storage import ITokenStoragePort, TokenData
 
 
 class SqliteTokenStorage(ITokenStoragePort):
@@ -29,7 +30,7 @@ class SqliteTokenStorage(ITokenStoragePort):
             await db.commit()
         self._initialized = True
 
-    async def get_tokens(self, user_id: str) -> dict | None:
+    async def get_tokens(self, user_id: str) -> TokenData | None:
         await self._ensure_db()
         async with aiosqlite.connect(self._db_path) as db:
             db.row_factory = aiosqlite.Row
@@ -40,11 +41,11 @@ class SqliteTokenStorage(ITokenStoragePort):
             row = await cursor.fetchone()
             if row is None:
                 return None
-            return {
-                "access_token": row["access_token"],
-                "refresh_token": row["refresh_token"],
-                "expires_at": row["expires_at"],
-            }
+            return TokenData(
+                access_token=row["access_token"],
+                refresh_token=row["refresh_token"],
+                expires_at=row["expires_at"],
+            )
 
     async def save_tokens(
         self,

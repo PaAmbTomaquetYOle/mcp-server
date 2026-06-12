@@ -17,9 +17,10 @@ What NOT to put here:
 """
 
 from .collaboration_tool import ICollaborationToolPort
-from .token_storage import ITokenStoragePort
+from .token_storage import ITokenStoragePort, TokenData
 
 __all__ = [
     "ICollaborationToolPort",
     "ITokenStoragePort",
+    "TokenData"
 ]

@@ -1,11 +1,16 @@
 import asyncio
 import time
+from typing import Any
 
 from httpx2 import AsyncClient, HTTPStatusError
 from jira import JIRA, Issue
 from jira.exceptions import JIRAError
 
-from mcp_server.application.ports import ICollaborationToolPort, ITokenStoragePort
+from mcp_server.application.ports import (
+    ICollaborationToolPort,
+    ITokenStoragePort,
+    TokenData,
+)
 from mcp_server.domain import (
     IssueNotFoundException,
     JiraApiException,
@@ -47,7 +52,7 @@ class JiraAdapter(ICollaborationToolPort):
         self.__client_id = client_id
         self.__client_secret = client_secret
 
-    async def _refresh_tokens(self, user_id: str, refresh_token: str) -> dict:
+    async def _refresh_tokens(self, user_id: str, refresh_token: str) -> TokenData:
         """Exchange a refresh token for a new access token via Atlassian OAuth 2.0."""
         try:
             async with AsyncClient() as client:
@@ -61,7 +66,7 @@ class JiraAdapter(ICollaborationToolPort):
                     },
                 )
                 response.raise_for_status()
-                data: dict = response.json()
+                data: dict[str, Any] = response.json()
         except HTTPStatusError as exc:
             if exc.response.status_code == 401:
                 raise JiraAuthenticationException(user_id) from exc
@@ -69,10 +74,10 @@ class JiraAdapter(ICollaborationToolPort):
         except Exception as exc:
             raise TokenRefreshException(user_id, str(exc)) from exc
 
-        new_tokens = {
-            "access_token": data["access_token"],
-            "refresh_token": data.get("refresh_token", refresh_token),
-            "expires_at": int(time.time()) + data["expires_in"],
+        new_tokens: TokenData = {
+            "access_token": str(data["access_token"]),
+            "refresh_token": str(data.get("refresh_token", refresh_token)),
+            "expires_at": int(time.time()) + int(data["expires_in"]),
         }
         await self.__token_storage.save_tokens(
             user_id,
@@ -82,19 +87,24 @@ class JiraAdapter(ICollaborationToolPort):
         )
         return new_tokens
 
+    def _build_client(self, access_token: str) -> JIRA:
+        return JIRA(server=self.__server_url, token_auth=access_token)
+
     async def _get_client(self, user_id: str) -> JIRA:
         """Build a JIRA client, refreshing the token if expired."""
-        tokens = await self.__token_storage.get_tokens(user_id)
+        tokens: TokenData | None = await self.__token_storage.get_tokens(user_id)
         if tokens is None:
             raise UserTokensNotFoundException(user_id)
 
-        if tokens["expires_at"] <= int(time.time()) + 60:
+        expires_at: int = tokens["expires_at"]
+        access_token: str = tokens["access_token"]
+
+        if expires_at <= int(time.time()) + 60:
             tokens = await self._refresh_tokens(user_id, tokens["refresh_token"])
+            access_token = tokens["access_token"]
 
         try:
-            return await asyncio.to_thread(
-                JIRA, server=self.__server_url, token_auth=tokens["access_token"]
-            )
+            return await asyncio.to_thread(self._build_client, access_token)
         except JIRAError as exc:
             if exc.status_code == 401:
                 raise JiraAuthenticationException(user_id) from exc
