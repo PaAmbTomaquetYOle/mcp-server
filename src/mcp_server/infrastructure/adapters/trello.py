@@ -70,7 +70,7 @@ class TrelloAdapter(ICollaborationToolPort):
     async def _get_client(self, user_id: str) -> TrelloClient:
         """
         Build a TrelloClient for the given user ID, retrieving tokens from storage.
-        
+
         Args:
             user_id (str): The ID of the user whose tokens to retrieve.
         Returns:
