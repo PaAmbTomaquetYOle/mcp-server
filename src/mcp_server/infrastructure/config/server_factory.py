@@ -6,7 +6,7 @@ from mcp.server import FastMCP
 
 from mcp_server.application.ports import ITokenStoragePort
 from mcp_server.application.services import CollaborationToolIntegrationService
-from mcp_server.infrastructure.adapters import JiraAdapter, SqliteTokenStorage
+from mcp_server.infrastructure.adapters import JiraAdapter, SqliteTokenStorage, TrelloAdapter
 from mcp_server.infrastructure.config.settings import McpServerSettings
 from mcp_server.infrastructure.controllers.tools import PingToolController, ExtractJiraTasksToolController
 
@@ -60,6 +60,13 @@ class ServerFactory:
             client_id=self._settings.jira_client_id,
             client_secret=self._settings.jira_client_secret,
             token_storage_port=self._create_token_storage(),
+        )
+
+    def _create_trello_adapter(self) -> TrelloAdapter:
+        return TrelloAdapter(
+            token_storage_port=self._create_token_storage(),
+            api_key=self._settings.trello_api_key,
+            api_secret=self._settings.trello_api_secret,
         )
 
     def _create_jira_service(self) -> CollaborationToolIntegrationService:
