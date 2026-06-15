@@ -1,5 +1,4 @@
 import asyncio
-from collections.abc import Iterable
 
 from trello import Card, Member, TrelloClient
 from trello.exceptions import ResourceUnavailable, Unauthorized
