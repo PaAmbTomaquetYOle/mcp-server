@@ -74,8 +74,16 @@ class ServerFactory:
         jira_service = CollaborationToolIntegrationService(jira_adapter)
         return jira_service
 
+    def _create_trello_service(self) -> CollaborationToolIntegrationService:
+        trello_adapter = self._create_trello_adapter()
+        trello_service = CollaborationToolIntegrationService(trello_adapter)
+        return trello_service
+
     def _register_tools(self, server: FastMCP) -> None:
         PingToolController(server).register()
         
         jira_service = self._create_jira_service()
         ExtractJiraTasksToolController(server, jira_service).register()
+
+        trello_service = self._create_trello_service()
+
