@@ -19,12 +19,13 @@ What NOT to put here:
 """
 
 from .base_controller import BaseController
-from .tools import *
 from .error_handler import tool_error_handler
+from .tools import *
 
 __all__ = [
     "BaseController",
     "PingToolController",
     "ExtractJiraTasksToolController",
+    "ExtractTrelloTasksToolController",
     "tool_error_handler",
 ]

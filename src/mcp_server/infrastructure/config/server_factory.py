@@ -8,7 +8,11 @@ from mcp_server.application.ports import ITokenStoragePort
 from mcp_server.application.services import CollaborationToolIntegrationService
 from mcp_server.infrastructure.adapters import JiraAdapter, SqliteTokenStorage, TrelloAdapter
 from mcp_server.infrastructure.config.settings import McpServerSettings
-from mcp_server.infrastructure.controllers.tools import ExtractJiraTasksToolController, PingToolController
+from mcp_server.infrastructure.controllers.tools import (
+    ExtractJiraTasksToolController,
+    ExtractTrelloTasksToolController,
+    PingToolController,
+)
 
 _INTERNAL_TOKEN = object()
 
@@ -86,4 +90,4 @@ class ServerFactory:
         ExtractJiraTasksToolController(server, jira_service).register()
 
         trello_service = self._create_trello_service()
-
+        ExtractTrelloTasksToolController(server, trello_service).register()
