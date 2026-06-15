@@ -9,6 +9,10 @@ from mcp_server.domain.exceptions import (
     JiraAuthenticationException,
     JiraUserNotFoundException,
     TokenRefreshException,
+    TrelloApiException,
+    TrelloAuthenticationException,
+    TrelloCardNotFoundException,
+    TrelloMemberNotFoundException,
     UserTokensNotFoundException,
 )
 
@@ -17,10 +21,14 @@ logger = logging.getLogger(__name__)
 ERROR_MESSAGES: dict[type[CollaborationToolException], str] = {
     UserTokensNotFoundException: "User not authenticated. Please complete the OAuth flow first.",
     JiraAuthenticationException: "Jira authentication failed. Token may be revoked — please re-authenticate.",
-    TokenRefreshException: "Failed to refresh Jira access token. Please re-authenticate.",
+    TokenRefreshException: "Failed to refresh access token. Please re-authenticate.",
     IssueNotFoundException: "The requested Jira issue was not found.",
     JiraUserNotFoundException: "The specified Jira user/assignee was not found.",
     JiraApiException: "Jira API error occurred.",
+    TrelloAuthenticationException: "Trello authentication failed. Token may be revoked — please re-authenticate.",
+    TrelloCardNotFoundException: "The requested Trello card was not found.",
+    TrelloMemberNotFoundException: "The specified Trello member was not found.",
+    TrelloApiException: "Trello API error occurred.",
 }
 
 

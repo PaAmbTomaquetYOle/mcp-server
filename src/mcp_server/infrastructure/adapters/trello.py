@@ -2,10 +2,17 @@ import asyncio
 from collections.abc import Iterable
 
 from trello import Card, Member, TrelloClient
+from trello.exceptions import ResourceUnavailable, Unauthorized
 
 from mcp_server.application.ports import ICollaborationToolPort, ITokenStoragePort, TokenData
 from mcp_server.domain import TrelloMember, TrelloTask
-from mcp_server.domain.exceptions import UserTokensNotFoundException
+from mcp_server.domain.exceptions import (
+    TrelloApiException,
+    TrelloAuthenticationException,
+    TrelloCardNotFoundException,
+    TrelloMemberNotFoundException,
+    UserTokensNotFoundException,
+)
 
 
 class TrelloAdapter(ICollaborationToolPort):
@@ -78,9 +85,13 @@ class TrelloAdapter(ICollaborationToolPort):
             TrelloClient: An instance of TrelloClient authenticated with the user's tokens.
         Raises:
             UserTokensNotFoundException: If no tokens are found for the user.
+            TrelloAuthenticationException: If the tokens are invalid or revoked.
         """
         tokens = await self._get_tokens(user_id)
-        return self._build_client(tokens["access_token"], tokens["refresh_token"])
+        try:
+            return self._build_client(tokens["access_token"], tokens["refresh_token"])
+        except Unauthorized as exc:
+            raise TrelloAuthenticationException(user_id) from exc
 
     @staticmethod
     def __member_to_domain_model(member: Member) -> TrelloMember:
@@ -129,16 +140,35 @@ class TrelloAdapter(ICollaborationToolPort):
 
     async def get_issue(self, issue_id: str, user_id: str) -> TrelloTask:
         client = await self._get_client(user_id)
-        card: Card = await asyncio.to_thread(client.get_card, issue_id)
+        try:
+            card: Card = await asyncio.to_thread(client.get_card, issue_id)
+        except Unauthorized as exc:
+            raise TrelloAuthenticationException(user_id) from exc
+        except ResourceUnavailable as exc:
+            if exc._status == 404:
+                raise TrelloCardNotFoundException(issue_id) from exc
+            raise TrelloApiException(str(exc), status_code=exc._status) from exc
         return await self.__card_to_domain_model(card, client)
 
     async def get_pending_issues(self, user_id: str, assignee: str) -> tuple[TrelloTask, ...]:
         client = await self._get_client(user_id)
-        member: Member = await asyncio.to_thread(client.get_member, assignee)
-        boards = await asyncio.to_thread(member.get_boards, "open")
-        board_cards = await asyncio.gather(
-            *(asyncio.to_thread(board.get_cards, None, "open") for board in boards)
-        )
+        try:
+            member: Member = await asyncio.to_thread(client.get_member, assignee)
+        except Unauthorized as exc:
+            raise TrelloAuthenticationException(user_id) from exc
+        except ResourceUnavailable as exc:
+            if exc._status == 404:
+                raise TrelloMemberNotFoundException(assignee) from exc
+            raise TrelloApiException(str(exc), status_code=exc._status) from exc
+        try:
+            boards = await asyncio.to_thread(member.get_boards, "open")
+            board_cards = await asyncio.gather(
+                *(asyncio.to_thread(board.get_cards, None, "open") for board in boards)
+            )
+        except Unauthorized as exc:
+            raise TrelloAuthenticationException(user_id) from exc
+        except ResourceUnavailable as exc:
+            raise TrelloApiException(str(exc), status_code=exc._status) from exc
         cards = [
             card
             for cards in board_cards
