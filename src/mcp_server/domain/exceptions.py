@@ -52,3 +52,38 @@ class JiraAuthenticationException(CollaborationToolException):
             "Token may be invalid or revoked — re-authentication required."
         )
         self.user_id = user_id
+
+
+class TrelloApiException(CollaborationToolException):
+    """Trello REST API returned an error."""
+
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class TrelloCardNotFoundException(TrelloApiException):
+    """The requested Trello card does not exist."""
+
+    def __init__(self, card_id: str) -> None:
+        super().__init__(f"Trello card not found: {card_id}", status_code=404)
+        self.card_id = card_id
+
+
+class TrelloMemberNotFoundException(TrelloApiException):
+    """The specified member was not found in Trello."""
+
+    def __init__(self, member: str) -> None:
+        super().__init__(f"Trello member not found: {member}", status_code=404)
+        self.member = member
+
+
+class TrelloAuthenticationException(CollaborationToolException):
+    """Authentication with Trello failed (invalid or revoked credentials)."""
+
+    def __init__(self, user_id: str) -> None:
+        super().__init__(
+            f"Trello authentication failed for user {user_id}. "
+            "Token may be invalid or revoked — re-authentication required."
+        )
+        self.user_id = user_id

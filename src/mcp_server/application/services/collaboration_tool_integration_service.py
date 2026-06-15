@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 
-from mcp_server.application import ICollaborationToolIntegrationService, ICollaborationToolPort
+from mcp_server.application.ports import ICollaborationToolPort
+from mcp_server.application.service_interfaces import ICollaborationToolIntegrationService
 from mcp_server.domain import CollaborationTask
 
 

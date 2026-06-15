@@ -4,10 +4,11 @@ This module defines the domain models for the collaboration task jerarchy, inclu
 
 from .collaboration_task import CollaborationTask
 from .jira_task import JiraTask
-from .trello_task import TrelloTask
+from .trello_task import TrelloMember, TrelloTask
 
 __all__ = [
     "CollaborationTask",
     "JiraTask",
     "TrelloTask",
+    "TrelloMember",
 ]

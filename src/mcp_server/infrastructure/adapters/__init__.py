@@ -14,10 +14,12 @@ What NOT to put here:
       adapt). Domain decisions belong in ``domain``/``application``.
 """
 
-from .sqlite_token_storage import SqliteTokenStorage
 from .jira import JiraAdapter
+from .sqlite_token_storage import SqliteTokenStorage
+from .trello import TrelloAdapter
 
 __all__ = [
     "SqliteTokenStorage",
     "JiraAdapter",
+    "TrelloAdapter",
 ]

@@ -12,10 +12,12 @@ What NOT to put here:
       request and calls an application service; the real work happens there.
 """
 
-from .ping_controller import PingToolController
 from .extract_jira_tasks_controller import ExtractJiraTasksToolController
+from .extract_trello_tasks_controller import ExtractTrelloTasksToolController
+from .ping_controller import PingToolController
 
 __all__ = [
     "PingToolController",
     "ExtractJiraTasksToolController",
+    "ExtractTrelloTasksToolController",
     ]

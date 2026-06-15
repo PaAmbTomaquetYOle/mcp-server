@@ -19,4 +19,6 @@ class McpServerSettings(BaseSettings):
     jira_client_secret: str = ""
     jira_redirect_uri: str = "http://localhost:8080/callback"
     jira_cloud_id: str = ""
-    jira_token_db_path: str = "data/tokens.db"
+    trello_api_key: str = ""
+    trello_api_secret: str = ""
+    token_db_path: str = "data/tokens.db"
