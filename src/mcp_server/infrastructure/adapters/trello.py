@@ -132,5 +132,20 @@ class TrelloAdapter(ICollaborationToolPort):
         card: Card = await asyncio.to_thread(client.get_card, issue_id)
         return await self.__card_to_domain_model(card, client)
 
-    async def get_pending_issues(self, user_id: str, assignee: str) -> Iterable[TrelloTask]:
-        raise NotImplementedError("Trello pending issue retrieval is not implemented yet.")
+    async def get_pending_issues(self, user_id: str, assignee: str) -> tuple[TrelloTask, ...]:
+        client = await self._get_client(user_id)
+        member: Member = await asyncio.to_thread(client.get_member, assignee)
+        boards = await asyncio.to_thread(member.get_boards, "open")
+        board_cards = await asyncio.gather(
+            *(asyncio.to_thread(board.get_cards, None, "open") for board in boards)
+        )
+        cards = [
+            card
+            for cards in board_cards
+            for card in cards
+            if member.id in card.idMembers
+        ]
+        tasks = await asyncio.gather(
+            *(self.__card_to_domain_model(card, client) for card in cards)
+        )
+        return tuple(tasks)
