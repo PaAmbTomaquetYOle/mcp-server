@@ -29,7 +29,7 @@ class ExtractTrelloTasksToolController(BaseController):
             self.get_pending_trello_cards,
             name="get_pending_trello_cards",
             title="Extract all pending Trello cards",
-            description=("Get all pending Trello cards assigned to a specific user."
+            description=("Get all pending Trello cards assigned to a specific user. "
                          "Requires authentication via user_id and filtering by assignee."),
         )
 

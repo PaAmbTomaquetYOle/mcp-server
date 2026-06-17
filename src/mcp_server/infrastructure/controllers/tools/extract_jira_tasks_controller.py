@@ -27,7 +27,7 @@ class ExtractJiraTasksToolController(BaseController):
             self.get_pending_jira_issues,
             name="get_pending_jira_issues",
             title="Extract all pending Jira issues",
-            description=("Get all pending Jira issues assigned to a specific user."
+            description=("Get all pending Jira issues assigned to a specific user. "
                          "Requires authentication via user_id and filtering by assignee."),
         )
 
