@@ -8,6 +8,7 @@ from mcp_server.application.ports import ITokenStoragePort
 from mcp_server.application.services import CollaborationToolIntegrationService
 from mcp_server.infrastructure.adapters import JiraAdapter, SqliteTokenStorage, TrelloAdapter
 from mcp_server.infrastructure.config.settings import McpServerSettings
+from mcp_server.infrastructure.controllers.prompts import ExtractTasksPromptController
 from mcp_server.infrastructure.controllers.tools import (
     ExtractJiraTasksToolController,
     ExtractTrelloTasksToolController,
@@ -53,6 +54,7 @@ class ServerFactory:
             debug=self._settings.debug,
         )
         self._register_tools(server)
+        self._register_prompts(server)
         return server
     
     def _create_token_storage(self) -> ITokenStoragePort:
@@ -91,3 +93,6 @@ class ServerFactory:
 
         trello_service = self._create_trello_service()
         ExtractTrelloTasksToolController(server, trello_service).register()
+
+    def _register_prompts(self, server: FastMCP) -> None:
+        ExtractTasksPromptController(server).register()
