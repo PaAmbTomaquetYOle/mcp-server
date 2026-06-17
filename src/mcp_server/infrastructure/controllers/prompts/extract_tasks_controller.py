@@ -25,7 +25,7 @@ class ExtractTasksPromptController(BaseController):
             Prompt(
                 name="extract_pending_tasks",
                 title="Extract Pending Tasks",
-                description=("Extract pending tasks assigned to"
+                description=("Extract pending tasks assigned to "
                              "a certain assignee from the specified collaboration tool."),
                 fn=self.extract_pending_tasks,
                 arguments=[
@@ -36,7 +36,7 @@ class ExtractTasksPromptController(BaseController):
                     ),
                     PromptArgument(
                         name="collaboration_tool",
-                        description=("Collaboration tool to extract tasks from."
+                        description=("Collaboration tool to extract tasks from. "
                                      "Allowed values: JIRA, TRELLO. Defaults to JIRA."),
                         required=False
                     )
