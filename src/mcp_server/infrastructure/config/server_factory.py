@@ -25,6 +25,11 @@ class ServerFactory:
     def __init__(
         self, settings: McpServerSettings, *, _token: object = None
     ) -> None:
+        """
+        Initialize the ServerFactory with the provided settings.
+        This constructor is private and should not be called directly.
+        Use ServerFactory.get_instance() to get the singleton instance.
+        """
         if _token is not _INTERNAL_TOKEN:
             raise TypeError(
                 "ServerFactory is a singleton."
@@ -34,6 +39,15 @@ class ServerFactory:
 
     @classmethod
     def get_instance(cls, settings: McpServerSettings) -> ServerFactory:
+        """
+        Get an instance of the ServerFactory singleton.
+
+        Args:
+            settings (McpServerSettings): The application settings.
+
+        Returns:
+            ServerFactory instance.
+        """
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -42,10 +56,20 @@ class ServerFactory:
 
     @classmethod
     def reset(cls) -> None:
+        """
+        Reset the singleton instance of ServerFactory.
+        This method is primarily for testing purposes to allow re-initialization of the singleton.
+        """
         with cls._lock:
             cls._instance = None
 
     def create(self) -> FastMCP:
+        """
+        Create and configure a FastMCP server instance with the necessary tools and prompts.
+
+        Returns:
+            FastMCP server instance.
+        """
         server = FastMCP(
             name=self._settings.name,
             host=self._settings.host,
