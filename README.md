@@ -15,6 +15,12 @@ Open the MCP Inspector:
 uv run mcp-inspector
 ```
 
+Open the Inspector already pointed to the local server:
+
+```powershell
+uv run mcp-inspector-local
+```
+
 Then connect it to:
 
 ```text
