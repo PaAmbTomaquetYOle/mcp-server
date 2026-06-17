@@ -8,12 +8,14 @@ dependencies = [
     "aiosqlite>=0.21.0",
     "httpx2>=2.4.0",
     "jira>=3.10.5",
-    "mcp>=1.27.2",
+    "mcp>=1.28.0",
     "py-trello>=0.20.1",
 ]
 
 [project.scripts]
 mcp-server = "mcp_server.main:main"
+mcp-inspector = "mcp_server.dev:main"
+mcp-inspector-local = "mcp_server.dev:open_local_inspector"
 
 [build-system]
 requires = ["hatchling"]
@@ -24,9 +26,9 @@ packages = ["src/mcp_server"]
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.3",
+    "pytest>=9.1.0",
     "httpx2>=2.4.0",
-    "ruff>=0.15.16",
+    "ruff>=0.15.17",
 ]
 
 [tool.ruff]

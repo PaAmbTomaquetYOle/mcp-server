@@ -20,12 +20,15 @@ class ExtractJiraTasksToolController(BaseController):
         self._server.add_tool(
             self.get_jira_issue,
             name="get_jira_issue",
+            title="Extract a Jira issue",
             description="Get a specific Jira issue by its ID. Requires authentication via user_id.",
         )
         self._server.add_tool(
             self.get_pending_jira_issues,
             name="get_pending_jira_issues",
-            description="Get all pending Jira issues assigned to a specific user. Requires authentication via user_id and filtering by assignee.",
+            title="Extract all pending Jira issues",
+            description=("Get all pending Jira issues assigned to a specific user. "
+                         "Requires authentication via user_id and filtering by assignee."),
         )
 
     @tool_error_handler

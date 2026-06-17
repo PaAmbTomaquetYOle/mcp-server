@@ -22,12 +22,14 @@ class ExtractTrelloTasksToolController(BaseController):
         self._server.add_tool(
             self.get_trello_card,
             name="get_trello_card",
+            title="Extract a specific Trello card",
             description="Get a specific Trello card by its ID. Requires authentication via user_id.",
         )
         self._server.add_tool(
             self.get_pending_trello_cards,
             name="get_pending_trello_cards",
-            description=("Get all pending Trello cards assigned to a specific user."
+            title="Extract all pending Trello cards",
+            description=("Get all pending Trello cards assigned to a specific user. "
                          "Requires authentication via user_id and filtering by assignee."),
         )
 

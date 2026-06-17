@@ -11,3 +11,9 @@ What NOT to put here:
     - Business logic: build the prompt and delegate any real work to an
       application service. No direct IO or SDK calls beyond the MCP framework.
 """
+
+from .extract_tasks_controller import ExtractTasksPromptController
+
+__all__ = [
+    'ExtractTasksPromptController'
+]

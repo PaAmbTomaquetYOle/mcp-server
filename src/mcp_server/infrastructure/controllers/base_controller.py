@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from mcp.server import FastMCP
 
+
 class BaseController(ABC):
     """Base controller abstract class that all specific controllers should inherit from. It provides a common structure and enforces the implementation of the register method for adding tools, resources, or prompts to the MCP server."""
     
