@@ -36,7 +36,8 @@ class ExtractTasksPromptController(BaseController):
                     ),
                     PromptArgument(
                         name="collaboration_tool",
-                        description="Collaboration tool to extract tasks from",
+                        description=("Collaboration tool to extract tasks from."
+                                     "Allowed values: JIRA, TRELLO. Defaults to JIRA."),
                         required=False
                     )
                 ]
@@ -59,6 +60,8 @@ class ExtractTasksPromptController(BaseController):
             str: The final prompt.
         """
 
+        if isinstance(collaboration_tool, str):
+            collaboration_tool = CollaborationToolEnum(collaboration_tool)
         tool_name, tool_instruction = self.__tool_map[collaboration_tool]
         tool_instruction = tool_instruction.format(assignee=assignee)
 
