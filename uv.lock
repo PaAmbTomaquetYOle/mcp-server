@@ -378,6 +378,7 @@ dependencies = [
     { name = "jira" },
     { name = "mcp" },
     { name = "py-trello" },
+    { name = "pydantic" },
 ]
 
 [package.dev-dependencies]
@@ -394,6 +395,7 @@ requires-dist = [
     { name = "jira", specifier = ">=3.10.5" },
     { name = "mcp", specifier = ">=1.28.0" },
     { name = "py-trello", specifier = ">=0.20.1" },
+    { name = "pydantic", specifier = ">=2.13.4" },
 ]
 
 [package.metadata.requires-dev]

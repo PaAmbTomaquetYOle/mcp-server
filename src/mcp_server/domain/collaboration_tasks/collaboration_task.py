@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from mcp_server.domain import CollaborationToolEnum
 
+
 class CollaborationTask(BaseModel, ABC):
     """Represents a task related to collaboration tool integration."""
 

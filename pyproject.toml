@@ -10,6 +10,7 @@ dependencies = [
     "jira>=3.10.5",
     "mcp>=1.28.0",
     "py-trello>=0.20.1",
+    "pydantic>=2.13.4",
 ]
 
 [project.scripts]
