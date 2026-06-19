@@ -13,7 +13,9 @@ What NOT to put here:
 """
 
 from .extract_tasks_controller import ExtractTasksPromptController
+from .jira_login_controller import JiraLoginPromptController
 
 __all__ = [
-    'ExtractTasksPromptController'
+    'ExtractTasksPromptController',
+    'JiraLoginPromptController',
 ]

@@ -25,6 +25,11 @@
   .icon svg { width: 28px; height: 28px; }
   h1 { font-size: 24px; font-weight: 600; margin-bottom: 12px; color: #f1f5f9; }
   p { font-size: 16px; line-height: 1.6; color: #94a3b8; }
+  .email {
+    margin-top: 16px; padding: 10px 16px; background: rgba(63, 185, 80, .08);
+    border: 1px solid #334155; border-radius: 8px;
+    font-size: 14px; color: #e2e8f0; font-family: monospace;
+  }
   .brand { font-size: 13px; margin-top: 32px; color: #475569; }
 </style>
 </head>
@@ -33,6 +38,7 @@
   <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
   <h1>Jira Connected Successfully</h1>
   <p>Your Jira account has been linked. You can close this tab and return to your application.</p>
+  <div class="email">{{ email }}</div>
   <p class="brand">BrainTrust MCP Server</p>
 </div>
 </body>

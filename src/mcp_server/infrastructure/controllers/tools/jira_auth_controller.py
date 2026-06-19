@@ -21,7 +21,7 @@ class JiraAuthToolController(BaseController):
             name="generate_jira_auth_url",
             title="Generate Jira authorization URL",
             description=(
-                "Generate an Atlassian OAuth 2.0 authorization URL for a user. "
+                "Generate an Atlassian OAuth 2.0 authorization URL. "
                 "The user must visit this URL to grant consent. "
                 "After granting consent, the browser redirects to the callback endpoint "
                 "which automatically exchanges the code for tokens."
@@ -34,41 +34,29 @@ class JiraAuthToolController(BaseController):
             description=(
                 "Exchange an OAuth authorization code for access and refresh tokens. "
                 "Usually not needed — the /callback endpoint handles this automatically. "
-                "Use this tool only for programmatic flows where the callback is not available."
+                "Use this tool only for programmatic flows where the callback is not available. "
+                "Returns the user's Atlassian email, which must be used as user_id in all Jira tool calls."
             ),
         )
 
     @tool_error_handler
-    async def generate_jira_auth_url(self, user_id: str) -> GenerateJiraAuthResponse:
-        """Generate the Atlassian OAuth 2.0 authorization URL.
-
-        Args:
-            user_id (str): Arbitrary identifier used as the key for token storage
-                (e.g. Slack user ID, email). Not a Jira account ID. Must be the
-                same value used in subsequent Jira API tool calls.
-        Returns:
-            The GenerateJiraAuthResponse object.
-        """
-        auth_url = await self.__jira_auth_service.generate_auth_url(user_id)
-        return GenerateJiraAuthResponse(
-            auth_url=auth_url,
-            user_id=user_id,
-        )
+    async def generate_jira_auth_url(self) -> GenerateJiraAuthResponse:
+        """Generate the Atlassian OAuth 2.0 authorization URL."""
+        auth_url = await self.__jira_auth_service.generate_auth_url(state="oauth")
+        return GenerateJiraAuthResponse(auth_url=auth_url)
 
     @tool_error_handler
-    async def complete_jira_auth(self, user_id: str, code: str) -> CompleteJiraAuthResponse:
+    async def complete_jira_auth(self, code: str) -> CompleteJiraAuthResponse:
         """Exchange an authorization code for tokens and store them.
 
         Args:
-            user_id (str): Arbitrary identifier used as the key for token storage.
-                Must match the value used in generate_jira_auth_url.
             code (str): The authorization code received after user consent.
         Returns:
-            A dict confirming the authentication was completed successfully.
+            CompleteJiraAuthResponse with the resolved email.
         """
-        await self.__jira_auth_service.exchange_auth_code(user_id, code)
+        result = await self.__jira_auth_service.exchange_auth_code(code)
         return CompleteJiraAuthResponse(
             success=True,
-            user_id=user_id,
-            message="Jira authentication completed. Tokens stored successfully.",
+            email=result["email"],
+            message=f"Jira authentication completed. Tokens stored for {result['email']}.",
         )

@@ -24,21 +24,20 @@ class OAuthCallbackController(BaseController):
         @self._server.custom_route("/callback", methods=["GET"])
         async def oauth_callback(request: Request) -> HTMLResponse:
             code = request.query_params.get("code")
-            user_id = request.query_params.get("state")
 
-            if not code or not user_id:
+            if not code:
                 return HTMLResponse(
-                    render_template("oauth_error.html", error="Missing required parameters (code or state)."),
+                    render_template("oauth_error.html", error="Missing required parameter: code."),
                     status_code=400,
                 )
 
             try:
-                await self.__jira_auth_service.exchange_auth_code(user_id, code)
+                result = await self.__jira_auth_service.exchange_auth_code(code)
             except Exception as exc:
-                logger.exception("OAuth callback failed for user_id=%s", user_id)
+                logger.exception("OAuth callback failed")
                 return HTMLResponse(
                     render_template("oauth_error.html", error=str(exc)),
                     status_code=500,
                 )
 
-            return HTMLResponse(render_template("oauth_success.html"))
+            return HTMLResponse(render_template("oauth_success.html", email=result["email"]))

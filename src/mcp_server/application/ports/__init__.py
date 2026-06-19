@@ -18,9 +18,10 @@ What NOT to put here:
 
 from .collaboration_tool import ICollaborationToolPort
 from .jira_auth import IJiraAuthPort
-from .token_storage import ITokenStoragePort, TokenData
+from .token_storage import AuthResult, ITokenStoragePort, TokenData
 
 __all__ = [
+    "AuthResult",
     "ICollaborationToolPort",
     "IJiraAuthPort",
     "ITokenStoragePort",

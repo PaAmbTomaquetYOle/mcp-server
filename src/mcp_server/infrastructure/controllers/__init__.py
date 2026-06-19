@@ -31,5 +31,6 @@ __all__ = [
     "ExtractJiraTasksToolController",
     "ExtractTrelloTasksToolController",
     "ExtractTasksPromptController",
+    "JiraLoginPromptController",
     "tool_error_handler",
 ]

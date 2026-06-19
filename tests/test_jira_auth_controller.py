@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 from mcp.server import FastMCP
 
-from mcp_server.application.ports import TokenData
+from mcp_server.application.ports.token_storage import AuthResult
 from mcp_server.domain import AuthCodeExchangeException
 from mcp_server.infrastructure.controllers.tools.jira_auth_controller import JiraAuthToolController
 from mcp_server.infrastructure.dto import CompleteJiraAuthResponse, GenerateJiraAuthResponse
@@ -15,7 +15,7 @@ def mock_auth_service():
     service = AsyncMock()
     service.generate_auth_url = AsyncMock(return_value="https://auth.atlassian.com/authorize?test=1")
     service.exchange_auth_code = AsyncMock(
-        return_value=TokenData(access_token="at", refresh_token="rt", expires_at=9999)
+        return_value=AuthResult(email="user@example.com", access_token="at", refresh_token="rt", expires_at=9999)
     )
     return service
 
@@ -41,36 +41,35 @@ class TestGenerateJiraAuthUrl:
         controller = JiraAuthToolController.__new__(JiraAuthToolController)
         controller._JiraAuthToolController__jira_auth_service = mock_auth_service
 
-        result = await controller.generate_jira_auth_url(user_id="user-1")
+        result = await controller.generate_jira_auth_url()
 
         assert isinstance(result, GenerateJiraAuthResponse)
         assert result.auth_url == "https://auth.atlassian.com/authorize?test=1"
-        assert result.user_id == "user-1"
-        mock_auth_service.generate_auth_url.assert_awaited_once_with("user-1")
+        mock_auth_service.generate_auth_url.assert_awaited_once_with(state="oauth")
 
 
 class TestCompleteJiraAuth:
     @pytest.mark.anyio
-    async def test_returns_complete_auth_response(self, mock_auth_service):
+    async def test_returns_complete_auth_response_with_email(self, mock_auth_service):
         controller = JiraAuthToolController.__new__(JiraAuthToolController)
         controller._JiraAuthToolController__jira_auth_service = mock_auth_service
 
-        result = await controller.complete_jira_auth(user_id="user-1", code="auth-code")
+        result = await controller.complete_jira_auth(code="auth-code")
 
         assert isinstance(result, CompleteJiraAuthResponse)
         assert result.success is True
-        assert result.user_id == "user-1"
-        mock_auth_service.exchange_auth_code.assert_awaited_once_with("user-1", "auth-code")
+        assert result.email == "user@example.com"
+        mock_auth_service.exchange_auth_code.assert_awaited_once_with("auth-code")
 
     @pytest.mark.anyio
     async def test_error_returns_structured_error(self, mock_auth_service):
         mock_auth_service.exchange_auth_code.side_effect = AuthCodeExchangeException(
-            "user-1", "invalid_grant"
+            "unknown", "invalid_grant"
         )
         controller = JiraAuthToolController.__new__(JiraAuthToolController)
         controller._JiraAuthToolController__jira_auth_service = mock_auth_service
 
-        result = await controller.complete_jira_auth(user_id="user-1", code="bad-code")
+        result = await controller.complete_jira_auth(code="bad-code")
 
         assert result["error"] is True
         assert result["error_type"] == "AuthCodeExchangeException"
