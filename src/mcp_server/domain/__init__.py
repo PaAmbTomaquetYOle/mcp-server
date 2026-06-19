@@ -29,6 +29,7 @@ __all__ = [
     "CollaborationToolEnum",
     "CollaborationTask",
     "JiraTask",
+    "JiraUser",
     "TrelloTask",
     "TrelloMember",
     "CollaborationToolException",
@@ -38,4 +39,5 @@ __all__ = [
     "JiraUserNotFoundException",
     "TokenRefreshException",
     "UserTokensNotFoundException",
+    "AuthCodeExchangeException",
 ]

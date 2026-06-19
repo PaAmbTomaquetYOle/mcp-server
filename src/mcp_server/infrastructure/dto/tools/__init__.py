@@ -1,5 +1,10 @@
 """Schemas for MCP tool controllers."""
 
-from mcp_server.infrastructure.dto.tools.ping_schemas import PingResult
+from .jira_auth_schemas import CompleteJiraAuthResponse, GenerateJiraAuthResponse
+from .ping_schemas import PingResult
 
-__all__ = ["PingResult"]
+__all__ = [
+    "PingResult",
+    "CompleteJiraAuthResponse",
+    "GenerateJiraAuthResponse",
+]

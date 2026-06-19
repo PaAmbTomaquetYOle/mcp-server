@@ -11,6 +11,14 @@ class TokenData(TypedDict):
     expires_at: int
 
 
+class AuthResult(TypedDict):
+    """Result of a successful OAuth token exchange, including the resolved user email."""
+    email: str
+    access_token: str
+    refresh_token: str
+    expires_at: int
+
+
 class ITokenStoragePort(ABC):
     """Interface for storing and retrieving OAuth tokens per user."""
 

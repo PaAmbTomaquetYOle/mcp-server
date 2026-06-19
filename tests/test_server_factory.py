@@ -25,6 +25,11 @@ class TestServerFactory:
 
         assert first is second
 
+    def test_create_registers_jira_auth_tools(self, server):
+        tool_names = get_tool_names(server)
+        assert "generate_jira_auth_url" in tool_names
+        assert "complete_jira_auth" in tool_names
+
     def test_direct_init_raises(self, make_settings):
         with pytest.raises(TypeError, match="singleton"):
             ServerFactory(make_settings())

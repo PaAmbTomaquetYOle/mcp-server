@@ -5,13 +5,15 @@ import threading
 from mcp.server import FastMCP
 
 from mcp_server.application.ports import ITokenStoragePort
-from mcp_server.application.services import CollaborationToolIntegrationService
-from mcp_server.infrastructure.adapters import JiraAdapter, SqliteTokenStorage, TrelloAdapter
+from mcp_server.application.services import CollaborationToolIntegrationService, JiraAuthService
+from mcp_server.infrastructure.adapters import JiraAdapter, JiraAuthAdapter, SqliteTokenStorage, TrelloAdapter
 from mcp_server.infrastructure.config.settings import McpServerSettings
-from mcp_server.infrastructure.controllers.prompts import ExtractTasksPromptController
+from mcp_server.infrastructure.controllers.prompts import ExtractTasksPromptController, JiraLoginPromptController
+from mcp_server.infrastructure.controllers.routes import OAuthCallbackController
 from mcp_server.infrastructure.controllers.tools import (
     ExtractJiraTasksToolController,
     ExtractTrelloTasksToolController,
+    JiraAuthToolController,
     PingToolController,
 )
 
@@ -79,6 +81,7 @@ class ServerFactory:
         )
         self._register_tools(server)
         self._register_prompts(server)
+        self._register_routes(server)
         return server
     
     def _create_token_storage(self) -> ITokenStoragePort:
@@ -86,7 +89,7 @@ class ServerFactory:
 
     def _create_jira_adapter(self) -> JiraAdapter:
         return JiraAdapter(
-            server_url=self._settings.jira_server_url,
+            cloud_id=self._settings.jira_cloud_id,
             client_id=self._settings.jira_client_id,
             client_secret=self._settings.jira_client_secret,
             token_storage_port=self._create_token_storage(),
@@ -98,6 +101,17 @@ class ServerFactory:
             api_key=self._settings.trello_api_key,
             api_secret=self._settings.trello_api_secret,
         )
+
+    def _create_jira_auth_adapter(self) -> JiraAuthAdapter:
+        return JiraAuthAdapter(
+            token_storage_port=self._create_token_storage(),
+            client_id=self._settings.jira_client_id,
+            client_secret=self._settings.jira_client_secret,
+            redirect_uri=self._settings.jira_redirect_uri,
+        )
+
+    def _create_jira_auth_service(self) -> JiraAuthService:
+        return JiraAuthService(self._create_jira_auth_adapter())
 
     def _create_jira_service(self) -> CollaborationToolIntegrationService:
         jira_adapter = self._create_jira_adapter()
@@ -111,12 +125,20 @@ class ServerFactory:
 
     def _register_tools(self, server: FastMCP) -> None:
         PingToolController(server).register()
-        
+
         jira_service = self._create_jira_service()
         ExtractJiraTasksToolController(server, jira_service).register()
+
+        jira_auth_service = self._create_jira_auth_service()
+        JiraAuthToolController(server, jira_auth_service).register()
 
         trello_service = self._create_trello_service()
         ExtractTrelloTasksToolController(server, trello_service).register()
 
     def _register_prompts(self, server: FastMCP) -> None:
         ExtractTasksPromptController(server).register()
+        JiraLoginPromptController(server).register()
+
+    def _register_routes(self, server: FastMCP) -> None:
+        jira_auth_service = self._create_jira_auth_service()
+        OAuthCallbackController(server, jira_auth_service).register()

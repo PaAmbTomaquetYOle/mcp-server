@@ -87,3 +87,14 @@ class TrelloAuthenticationException(CollaborationToolException):
             "Token may be invalid or revoked — re-authentication required."
         )
         self.user_id = user_id
+
+
+class AuthCodeExchangeException(CollaborationToolException):
+    """Failed to exchange an OAuth authorization code for tokens."""
+
+    def __init__(self, user_id: str, reason: str) -> None:
+        super().__init__(
+            f"Auth code exchange failed for user {user_id}: {reason}"
+        )
+        self.user_id = user_id
+        self.reason = reason

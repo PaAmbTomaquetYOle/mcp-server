@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from mcp_server.domain import CollaborationToolEnum
 from mcp_server.domain.collaboration_tasks import CollaborationTask
 
+
 class TrelloMember(BaseModel):
     """Represents a Trello member model."""
     id: str = Field(

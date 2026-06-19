@@ -15,11 +15,13 @@ What NOT to put here:
 """
 
 from .jira import JiraAdapter
+from .jira_auth import JiraAuthAdapter
 from .sqlite_token_storage import SqliteTokenStorage
 from .trello import TrelloAdapter
 
 __all__ = [
     "SqliteTokenStorage",
     "JiraAdapter",
+    "JiraAuthAdapter",
     "TrelloAdapter",
 ]

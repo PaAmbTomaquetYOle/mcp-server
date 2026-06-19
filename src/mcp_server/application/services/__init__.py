@@ -16,7 +16,9 @@ What NOT to put here:
 """
 
 from .collaboration_tool_integration_service import CollaborationToolIntegrationService
+from .jira_auth_service import JiraAuthService
 
 __all__ = [
     "CollaborationToolIntegrationService",
+    "JiraAuthService",
 ]
