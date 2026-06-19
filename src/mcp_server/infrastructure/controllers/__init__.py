@@ -21,10 +21,12 @@ What NOT to put here:
 from .base_controller import BaseController
 from .error_handler import tool_error_handler
 from .prompts import *
+from .routes import *
 from .tools import *
 
 __all__ = [
     "BaseController",
+    "OAuthCallbackController",
     "PingToolController",
     "ExtractJiraTasksToolController",
     "ExtractTrelloTasksToolController",
