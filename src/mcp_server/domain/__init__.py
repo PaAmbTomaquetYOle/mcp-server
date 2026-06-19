@@ -39,4 +39,5 @@ __all__ = [
     "JiraUserNotFoundException",
     "TokenRefreshException",
     "UserTokensNotFoundException",
+    "AuthCodeExchangeException",
 ]

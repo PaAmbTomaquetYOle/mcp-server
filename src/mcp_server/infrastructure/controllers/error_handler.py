@@ -3,6 +3,7 @@ from collections.abc import Callable
 from functools import wraps
 
 from mcp_server.domain.exceptions import (
+    AuthCodeExchangeException,
     CollaborationToolException,
     IssueNotFoundException,
     JiraApiException,
@@ -29,6 +30,7 @@ ERROR_MESSAGES: dict[type[CollaborationToolException], str] = {
     TrelloCardNotFoundException: "The requested Trello card was not found.",
     TrelloMemberNotFoundException: "The specified Trello member was not found.",
     TrelloApiException: "Trello API error occurred.",
+    AuthCodeExchangeException: "Failed to exchange authorization code. The code may be invalid or expired.",
 }
 
 
