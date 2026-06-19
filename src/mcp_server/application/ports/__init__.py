@@ -17,10 +17,12 @@ What NOT to put here:
 """
 
 from .collaboration_tool import ICollaborationToolPort
+from .jira_auth import IJiraAuthPort
 from .token_storage import ITokenStoragePort, TokenData
 
 __all__ = [
     "ICollaborationToolPort",
+    "IJiraAuthPort",
     "ITokenStoragePort",
-    "TokenData"
+    "TokenData",
 ]
