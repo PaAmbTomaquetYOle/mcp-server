@@ -128,7 +128,6 @@ class TrelloAdapter(ICollaborationToolPort):
             description=card.description,
             url=card.url,
             status="completed" if card.closed else "pending",
-            priority=None,
             project=card.board.name,
             due_date=card.due,
             list_id=card.list_id,
