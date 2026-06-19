@@ -22,6 +22,7 @@ What NOT to put here:
 from .tools import *
 
 __all__ = [
+    "CompleteJiraAuthResponse",
     "GenerateJiraAuthResponse",
     "PingResult",
 ]

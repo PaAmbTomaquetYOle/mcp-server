@@ -3,7 +3,7 @@ from mcp.server import FastMCP
 from mcp_server.application.service_interfaces import IJiraAuthService
 from mcp_server.infrastructure.controllers.base_controller import BaseController
 from mcp_server.infrastructure.controllers.error_handler import tool_error_handler
-from mcp_server.infrastructure.dto import GenerateJiraAuthResponse
+from mcp_server.infrastructure.dto import CompleteJiraAuthResponse, GenerateJiraAuthResponse
 
 
 class JiraAuthToolController(BaseController):
@@ -51,7 +51,7 @@ class JiraAuthToolController(BaseController):
         )
 
     @tool_error_handler
-    async def complete_jira_auth(self, user_id: str, code: str) -> dict:
+    async def complete_jira_auth(self, user_id: str, code: str) -> CompleteJiraAuthResponse:
         """Exchange an authorization code for tokens and store them.
 
         Args:
@@ -61,8 +61,8 @@ class JiraAuthToolController(BaseController):
             A dict confirming the authentication was completed successfully.
         """
         await self.__jira_auth_service.exchange_auth_code(user_id, code)
-        return {
-            "success": True,
-            "user_id": user_id,
-            "message": "Jira authentication completed. Tokens stored successfully.",
-        }
+        return CompleteJiraAuthResponse(
+            success=True,
+            user_id=user_id,
+            message="Jira authentication completed. Tokens stored successfully.",
+        )
