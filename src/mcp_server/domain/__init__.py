@@ -29,6 +29,7 @@ __all__ = [
     "CollaborationToolEnum",
     "CollaborationTask",
     "JiraTask",
+    "JiraUser",
     "TrelloTask",
     "TrelloMember",
     "CollaborationToolException",

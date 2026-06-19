@@ -5,6 +5,7 @@ from typing import Any
 from httpx2 import AsyncClient, HTTPStatusError
 from jira import JIRA, Issue
 from jira.exceptions import JIRAError
+from jira.resources import UnknownResource
 
 from mcp_server.application.ports import (
     ICollaborationToolPort,
@@ -16,6 +17,7 @@ from mcp_server.domain import (
     JiraApiException,
     JiraAuthenticationException,
     JiraTask,
+    JiraUser,
     JiraUserNotFoundException,
     TokenRefreshException,
     UserTokensNotFoundException,
@@ -115,16 +117,29 @@ class JiraAdapter(ICollaborationToolPort):
         """Escape backslashes and double quotes to prevent JQL injection."""
         return value.replace("\\", "\\\\").replace('"', '\\"')
 
+    @staticmethod
+    def __jira_user_to_domain_model(jira_user: UnknownResource) -> JiraUser:
+        return JiraUser(
+            display_name=jira_user.displayName,
+            email=jira_user.emailAddress,
+            name=jira_user.name,
+        )
+
     def __issue_to_domain_model(self, issue: Issue) -> JiraTask:
         """Convert a JIRA Issue to a JiraTask domain model."""
         return JiraTask(
-            task_id=issue.key,
+            task_id=issue.id,
+            issue_key=issue.key,
             title=issue.fields.summary,
             description=issue.fields.description,
-            url=f"{self.__server_url}/browse/{issue.key}",
+            url=issue.permalink(),
             status=issue.fields.status.name,
             priority=issue.fields.priority.name if issue.fields.priority else None,
             project=issue.fields.project.name,
+            reporter=self.__jira_user_to_domain_model(issue.fields.reporter),
+            assignee=self.__jira_user_to_domain_model(issue.fields.assignee) if issue.fields.assignee else None,
+            creator=self.__jira_user_to_domain_model(issue.fields.creator),
+            issue_type=str(issue.fields.issuetype)
         )
 
     async def get_issue(self, issue_id: str, user_id: str) -> JiraTask:
