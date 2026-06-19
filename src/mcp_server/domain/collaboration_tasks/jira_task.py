@@ -1,7 +1,7 @@
 from pydantic import Field
 
-from mcp_server.domain.collaboration_tasks import CollaborationTask
 from mcp_server.domain import CollaborationToolEnum
+from mcp_server.domain.collaboration_tasks import CollaborationTask
 
 
 class JiraTask(CollaborationTask):
