@@ -11,7 +11,7 @@ from mcp_server.domain import AuthCodeExchangeException
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 ATLASSIAN_ME_URL = "https://api.atlassian.com/me"
-JIRA_OAUTH_SCOPES = "read:jira-work read:jira-user offline_access"
+JIRA_OAUTH_SCOPES = "read:me read:jira-work read:jira-user offline_access"
 
 
 class JiraAuthAdapter(IJiraAuthPort):
