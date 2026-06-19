@@ -26,31 +26,25 @@ from mcp_server.domain import (
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 
 
+ATLASSIAN_API_GATEWAY = "https://api.atlassian.com/ex/jira"
+
+
 class JiraAdapter(ICollaborationToolPort):
 
     __token_storage: ITokenStoragePort
-    __server_url: str
+    __cloud_id: str
     __client_id: str
     __client_secret: str
 
     def __init__(
         self,
         token_storage_port: ITokenStoragePort,
-        server_url: str,
+        cloud_id: str,
         client_id: str,
         client_secret: str,
     ) -> None:
-        """
-        Initializes the JiraAdapter with necessary configuration and token storage.
-
-        Args:
-            token_storage_port (ITokenStoragePort): Port for storing and retrieving OAuth tokens.
-            server_url (str): Base URL of the Jira server.
-            client_id (str): OAuth 2.0 client ID for Jira integration.
-            client_secret (str): OAuth 2.0 client secret for Jira integration.
-        """
         self.__token_storage = token_storage_port
-        self.__server_url = server_url
+        self.__cloud_id = cloud_id
         self.__client_id = client_id
         self.__client_secret = client_secret
 
@@ -90,7 +84,7 @@ class JiraAdapter(ICollaborationToolPort):
         return new_tokens
 
     def _build_client(self, access_token: str) -> JIRA:
-        return JIRA(server=self.__server_url, token_auth=access_token)
+        return JIRA(server=f"{ATLASSIAN_API_GATEWAY}/{self.__cloud_id}", token_auth=access_token)
 
     async def _get_client(self, user_id: str) -> JIRA:
         """Build a JIRA client, refreshing the token if expired."""

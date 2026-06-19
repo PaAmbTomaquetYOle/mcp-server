@@ -89,7 +89,7 @@ class ServerFactory:
 
     def _create_jira_adapter(self) -> JiraAdapter:
         return JiraAdapter(
-            server_url=self._settings.jira_server_url,
+            cloud_id=self._settings.jira_cloud_id,
             client_id=self._settings.jira_client_id,
             client_secret=self._settings.jira_client_secret,
             token_storage_port=self._create_token_storage(),
