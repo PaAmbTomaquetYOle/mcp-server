@@ -62,14 +62,14 @@ class TestCompleteJiraAuth:
         mock_auth_service.exchange_auth_code.assert_awaited_once_with("auth-code")
 
     @pytest.mark.anyio
-    async def test_error_returns_structured_error(self, mock_auth_service):
+    async def test_error_raises_tool_error(self, mock_auth_service):
+        from mcp.server.fastmcp.exceptions import ToolError
+
         mock_auth_service.exchange_auth_code.side_effect = AuthCodeExchangeException(
             "unknown", "invalid_grant"
         )
         controller = JiraAuthToolController.__new__(JiraAuthToolController)
         controller._JiraAuthToolController__jira_auth_service = mock_auth_service
 
-        result = await controller.complete_jira_auth(code="bad-code")
-
-        assert result["error"] is True
-        assert result["error_type"] == "AuthCodeExchangeException"
+        with pytest.raises(ToolError, match="invalid_grant"):
+            await controller.complete_jira_auth(code="bad-code")
