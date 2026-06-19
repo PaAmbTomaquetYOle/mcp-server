@@ -6,6 +6,7 @@ from mcp.server import FastMCP
 from mcp_server.application.ports import TokenData
 from mcp_server.domain import AuthCodeExchangeException
 from mcp_server.infrastructure.controllers.tools.jira_auth_controller import JiraAuthToolController
+from mcp_server.infrastructure.dto import CompleteJiraAuthResponse, GenerateJiraAuthResponse
 from tests.conftest import get_tool_names
 
 
@@ -36,27 +37,29 @@ class TestJiraAuthToolRegistration:
 
 class TestGenerateJiraAuthUrl:
     @pytest.mark.anyio
-    async def test_returns_auth_url_dict(self, mock_auth_service):
+    async def test_returns_generate_auth_response(self, mock_auth_service):
         controller = JiraAuthToolController.__new__(JiraAuthToolController)
         controller._JiraAuthToolController__jira_auth_service = mock_auth_service
 
         result = await controller.generate_jira_auth_url(user_id="user-1")
 
-        assert result["auth_url"] == "https://auth.atlassian.com/authorize?test=1"
-        assert result["user_id"] == "user-1"
+        assert isinstance(result, GenerateJiraAuthResponse)
+        assert result.auth_url == "https://auth.atlassian.com/authorize?test=1"
+        assert result.user_id == "user-1"
         mock_auth_service.generate_auth_url.assert_awaited_once_with("user-1")
 
 
 class TestCompleteJiraAuth:
     @pytest.mark.anyio
-    async def test_returns_success_dict(self, mock_auth_service):
+    async def test_returns_complete_auth_response(self, mock_auth_service):
         controller = JiraAuthToolController.__new__(JiraAuthToolController)
         controller._JiraAuthToolController__jira_auth_service = mock_auth_service
 
         result = await controller.complete_jira_auth(user_id="user-1", code="auth-code")
 
-        assert result["success"] is True
-        assert result["user_id"] == "user-1"
+        assert isinstance(result, CompleteJiraAuthResponse)
+        assert result.success is True
+        assert result.user_id == "user-1"
         mock_auth_service.exchange_auth_code.assert_awaited_once_with("user-1", "auth-code")
 
     @pytest.mark.anyio
