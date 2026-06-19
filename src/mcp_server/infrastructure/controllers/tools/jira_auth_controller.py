@@ -22,7 +22,9 @@ class JiraAuthToolController(BaseController):
             title="Generate Jira authorization URL",
             description=(
                 "Generate an Atlassian OAuth 2.0 authorization URL for a user. "
-                "The user must visit this URL to grant consent."
+                "The user must visit this URL to grant consent. "
+                "After granting consent, the browser redirects to the callback endpoint "
+                "which automatically exchanges the code for tokens."
             ),
         )
         self._server.add_tool(
@@ -31,7 +33,8 @@ class JiraAuthToolController(BaseController):
             title="Complete Jira authentication",
             description=(
                 "Exchange an OAuth authorization code for access and refresh tokens. "
-                "Call this after the user has authorized via the URL from generate_jira_auth_url."
+                "Usually not needed — the /callback endpoint handles this automatically. "
+                "Use this tool only for programmatic flows where the callback is not available."
             ),
         )
 
@@ -40,7 +43,9 @@ class JiraAuthToolController(BaseController):
         """Generate the Atlassian OAuth 2.0 authorization URL.
 
         Args:
-            user_id (str): The ID of the user initiating the OAuth flow.
+            user_id (str): Arbitrary identifier used as the key for token storage
+                (e.g. Slack user ID, email). Not a Jira account ID. Must be the
+                same value used in subsequent Jira API tool calls.
         Returns:
             The GenerateJiraAuthResponse object.
         """
@@ -55,7 +60,8 @@ class JiraAuthToolController(BaseController):
         """Exchange an authorization code for tokens and store them.
 
         Args:
-            user_id (str): The ID of the user completing the OAuth flow.
+            user_id (str): Arbitrary identifier used as the key for token storage.
+                Must match the value used in generate_jira_auth_url.
             code (str): The authorization code received after user consent.
         Returns:
             A dict confirming the authentication was completed successfully.
