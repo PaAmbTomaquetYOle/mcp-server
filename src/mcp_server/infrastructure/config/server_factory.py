@@ -5,8 +5,8 @@ import threading
 from mcp.server import FastMCP
 
 from mcp_server.application.ports import ITokenStoragePort
-from mcp_server.application.services import CollaborationToolIntegrationService, JiraAuthService
-from mcp_server.infrastructure.adapters import JiraAdapter, JiraAuthAdapter, SqliteTokenStorage, TrelloAdapter
+from mcp_server.application.services import CollaborationToolIntegrationService, JiraAuthService, TrelloAuthService
+from mcp_server.infrastructure.adapters import JiraAdapter, JiraAuthAdapter, SqliteTokenStorage, TrelloAdapter, TrelloAuthAdapter
 from mcp_server.infrastructure.config.settings import McpServerSettings
 from mcp_server.infrastructure.controllers.prompts import ExtractTasksPromptController, JiraLoginPromptController
 from mcp_server.infrastructure.controllers.routes import OAuthCallbackController
@@ -15,6 +15,7 @@ from mcp_server.infrastructure.controllers.tools import (
     ExtractTrelloTasksToolController,
     JiraAuthToolController,
     PingToolController,
+    TrelloAuthToolController,
 )
 
 _INTERNAL_TOKEN = object()
@@ -110,6 +111,13 @@ class ServerFactory:
             redirect_uri=self._settings.jira_redirect_uri,
         )
 
+    def _create_trello_auth_adapter(self) -> TrelloAuthAdapter:
+        return TrelloAuthAdapter(
+            token_storage_port=self._create_token_storage(),
+            api_key=self._settings.trello_api_key,
+            app_name=self._settings.trello_app_name,
+        )
+
     def _create_jira_auth_service(self) -> JiraAuthService:
         return JiraAuthService(self._create_jira_auth_adapter())
 
@@ -117,6 +125,9 @@ class ServerFactory:
         jira_adapter = self._create_jira_adapter()
         jira_service = CollaborationToolIntegrationService(jira_adapter)
         return jira_service
+
+    def _create_trello_auth_service(self) -> TrelloAuthService:
+        return TrelloAuthService(self._create_trello_auth_adapter())
 
     def _create_trello_service(self) -> CollaborationToolIntegrationService:
         trello_adapter = self._create_trello_adapter()
@@ -134,6 +145,9 @@ class ServerFactory:
 
         trello_service = self._create_trello_service()
         ExtractTrelloTasksToolController(server, trello_service).register()
+
+        trello_auth_service = self._create_trello_auth_service()
+        TrelloAuthToolController(server, trello_auth_service).register()
 
     def _register_prompts(self, server: FastMCP) -> None:
         ExtractTasksPromptController(server).register()
