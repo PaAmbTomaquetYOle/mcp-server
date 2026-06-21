@@ -31,40 +31,39 @@ class TrelloAuthToolController(BaseController):
             name="complete_trello_auth",
             title="Complete Trello authentication",
             description=(
-                "Store Trello OAuth credentials (token and token_secret) for a user. "
+                "Store Trello OAuth credentials (token and token_secret). "
+                "Resolves the Trello username automatically from the token "
+                "and uses it as the user_id for all subsequent Trello operations. "
                 "Call this after the user has completed the Trello authorization flow "
                 "and obtained their token pair."
             ),
         )
 
     @tool_error_handler
-    async def generate_trello_auth_url(self, user_id: str) -> GenerateTrelloAuthResponse:
+    async def generate_trello_auth_url(self) -> GenerateTrelloAuthResponse:
         """Generate the Trello OAuth authorization URL.
 
-        Args:
-            user_id (str): The ID of the user initiating authorization.
         Returns:
             GenerateTrelloAuthResponse with the authorization URL.
         """
-        auth_url = await self.__trello_auth_service.generate_auth_url(user_id)
+        auth_url = await self.__trello_auth_service.generate_auth_url()
         return GenerateTrelloAuthResponse(auth_url=auth_url)
 
     @tool_error_handler
     async def complete_trello_auth(
-        self, user_id: str, token: str, token_secret: str
+        self, token: str, token_secret: str
     ) -> CompleteTrelloAuthResponse:
-        """Store Trello OAuth tokens for a user.
+        """Store Trello OAuth tokens, resolving the username from the token.
 
         Args:
-            user_id (str): The ID of the user these tokens belong to.
             token (str): The OAuth access token from Trello.
             token_secret (str): The OAuth token secret from Trello.
         Returns:
-            CompleteTrelloAuthResponse confirming storage.
+            CompleteTrelloAuthResponse with the resolved username.
         """
-        await self.__trello_auth_service.store_tokens(user_id, token, token_secret)
+        username = await self.__trello_auth_service.store_tokens(token, token_secret)
         return CompleteTrelloAuthResponse(
             success=True,
-            user_id=user_id,
-            message=f"Trello authentication completed. Tokens stored for {user_id}.",
+            user_id=username,
+            message=f"Trello authentication completed. Tokens stored for {username}.",
         )

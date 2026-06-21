@@ -1,9 +1,12 @@
 from urllib.parse import urlencode
 
+from httpx2 import AsyncClient, HTTPStatusError
+
 from mcp_server.application.ports import ITrelloAuthPort, ITokenStoragePort
 from mcp_server.domain.exceptions import TrelloTokenStorageException
 
 TRELLO_AUTHORIZE_URL = "https://trello.com/1/authorize"
+TRELLO_MEMBERS_ME_URL = "https://api.trello.com/1/members/me"
 
 
 class TrelloAuthAdapter(ITrelloAuthPort):
@@ -22,7 +25,7 @@ class TrelloAuthAdapter(ITrelloAuthPort):
         self.__api_key = api_key
         self.__app_name = app_name
 
-    async def generate_auth_url(self, user_id: str) -> str:
+    async def generate_auth_url(self) -> str:
         params = {
             "key": self.__api_key,
             "name": self.__app_name,
@@ -32,15 +35,38 @@ class TrelloAuthAdapter(ITrelloAuthPort):
         }
         return f"{TRELLO_AUTHORIZE_URL}?{urlencode(params)}"
 
-    async def store_tokens(self, user_id: str, token: str, token_secret: str) -> None:
+    async def store_tokens(self, token: str, token_secret: str) -> str:
         if not token or not token.strip():
-            raise TrelloTokenStorageException(user_id, "token must not be empty")
+            raise TrelloTokenStorageException("unknown", "token must not be empty")
         if not token_secret or not token_secret.strip():
-            raise TrelloTokenStorageException(user_id, "token_secret must not be empty")
+            raise TrelloTokenStorageException("unknown", "token_secret must not be empty")
+
+        username = await self._resolve_username(token)
 
         await self.__token_storage.save_tokens(
-            user_id=user_id,
+            user_id=username,
             access_token=token,
             refresh_token=token_secret,
             expires_at=0,
         )
+        return username
+
+    async def _resolve_username(self, token: str) -> str:
+        try:
+            async with AsyncClient() as client:
+                response = await client.get(
+                    TRELLO_MEMBERS_ME_URL,
+                    params={"key": self.__api_key, "token": token},
+                )
+                response.raise_for_status()
+                return str(response.json()["username"])
+        except HTTPStatusError as exc:
+            raise TrelloTokenStorageException(
+                "unknown",
+                f"Failed to resolve Trello username: HTTP {exc.response.status_code}",
+            ) from exc
+        except Exception as exc:
+            raise TrelloTokenStorageException(
+                "unknown",
+                f"Failed to resolve Trello username: {exc}",
+            ) from exc
