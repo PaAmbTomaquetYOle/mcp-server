@@ -26,6 +26,7 @@ class McpServerSettings(BaseSettings):
     jira_cloud_id: str = ""
     trello_api_key: str = ""
     trello_api_secret: str = ""
+    trello_app_name: str = "BrainTrust"
     token_db_path: str = "data/tokens.db"
 
     @model_validator(mode="after")
