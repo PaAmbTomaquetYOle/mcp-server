@@ -23,6 +23,8 @@ from .tools import *
 
 __all__ = [
     "CompleteJiraAuthResponse",
+    "CompleteTrelloAuthResponse",
     "GenerateJiraAuthResponse",
+    "GenerateTrelloAuthResponse",
     "PingResult",
 ]
