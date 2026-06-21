@@ -13,12 +13,11 @@ class ITrelloAuthPort(ABC):
         """
 
     @abstractmethod
-    async def store_tokens(self, token: str, token_secret: str) -> str:
+    async def store_token(self, token: str) -> str:
         """Resolve the Trello username from the token and persist OAuth credentials.
 
         Args:
             token: The OAuth access token from Trello.
-            token_secret: The OAuth token secret from Trello.
         Returns:
             The resolved Trello username, used as user_id for subsequent calls.
         """

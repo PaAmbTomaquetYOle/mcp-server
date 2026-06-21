@@ -23,7 +23,7 @@ class TrelloAuthToolController(BaseController):
             description=(
                 "Generate a Trello OAuth authorization URL. "
                 "The user must visit this URL to grant consent and obtain "
-                "the OAuth token and token secret required for Trello access."
+                "the OAuth token required for Trello access."
             ),
         )
         self._server.add_tool(
@@ -31,11 +31,11 @@ class TrelloAuthToolController(BaseController):
             name="complete_trello_auth",
             title="Complete Trello authentication",
             description=(
-                "Store Trello OAuth credentials (token and token_secret). "
+                "Store a Trello OAuth token. "
                 "Resolves the Trello username automatically from the token "
                 "and uses it as the user_id for all subsequent Trello operations. "
                 "Call this after the user has completed the Trello authorization flow "
-                "and obtained their token pair."
+                "and obtained their token."
             ),
         )
 
@@ -50,18 +50,15 @@ class TrelloAuthToolController(BaseController):
         return GenerateTrelloAuthResponse(auth_url=auth_url)
 
     @tool_error_handler
-    async def complete_trello_auth(
-        self, token: str, token_secret: str
-    ) -> CompleteTrelloAuthResponse:
-        """Store Trello OAuth tokens, resolving the username from the token.
+    async def complete_trello_auth(self, token: str) -> CompleteTrelloAuthResponse:
+        """Store a Trello OAuth token, resolving the username from it.
 
         Args:
             token (str): The OAuth access token from Trello.
-            token_secret (str): The OAuth token secret from Trello.
         Returns:
             CompleteTrelloAuthResponse with the resolved username.
         """
-        username = await self.__trello_auth_service.store_tokens(token, token_secret)
+        username = await self.__trello_auth_service.store_token(token)
         return CompleteTrelloAuthResponse(
             success=True,
             user_id=username,

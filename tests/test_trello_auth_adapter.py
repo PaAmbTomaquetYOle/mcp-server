@@ -73,39 +73,29 @@ def _mock_resolve_username(username: str = "johndoe"):
     )
 
 
-class TestStoreTokens:
+class TestStoreToken:
     @pytest.mark.anyio
-    async def test_resolves_username_and_stores_tokens(self, adapter, token_storage):
+    async def test_resolves_username_and_stores_token(self, adapter, token_storage):
         with _mock_resolve_username("johndoe"):
-            username = await adapter.store_tokens("my-token", "my-secret")
+            username = await adapter.store_token("my-token")
 
         assert username == "johndoe"
         token_storage.save_tokens.assert_awaited_once_with(
             user_id="johndoe",
             access_token="my-token",
-            refresh_token="my-secret",
+            refresh_token="",
             expires_at=0,
         )
 
     @pytest.mark.anyio
     async def test_empty_token_raises_exception(self, adapter):
         with pytest.raises(TrelloTokenStorageException, match="token must not be empty"):
-            await adapter.store_tokens("", "my-secret")
+            await adapter.store_token("")
 
     @pytest.mark.anyio
     async def test_whitespace_token_raises_exception(self, adapter):
         with pytest.raises(TrelloTokenStorageException, match="token must not be empty"):
-            await adapter.store_tokens("   ", "my-secret")
-
-    @pytest.mark.anyio
-    async def test_empty_token_secret_raises_exception(self, adapter):
-        with pytest.raises(TrelloTokenStorageException, match="token_secret must not be empty"):
-            await adapter.store_tokens("my-token", "")
-
-    @pytest.mark.anyio
-    async def test_whitespace_token_secret_raises_exception(self, adapter):
-        with pytest.raises(TrelloTokenStorageException, match="token_secret must not be empty"):
-            await adapter.store_tokens("my-token", "   ")
+            await adapter.store_token("   ")
 
     @pytest.mark.anyio
     async def test_api_failure_raises_exception(self, adapter):
@@ -114,4 +104,4 @@ class TestStoreTokens:
             side_effect=Exception("connection refused"),
         ):
             with pytest.raises(TrelloTokenStorageException, match="Failed to resolve Trello username"):
-                await adapter.store_tokens("my-token", "my-secret")
+                await adapter.store_token("my-token")

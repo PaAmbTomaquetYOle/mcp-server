@@ -13,5 +13,5 @@ class TrelloAuthService(ITrelloAuthService):
     async def generate_auth_url(self) -> str:
         return await self.__trello_auth_port.generate_auth_url()
 
-    async def store_tokens(self, token: str, token_secret: str) -> str:
-        return await self.__trello_auth_port.store_tokens(token, token_secret)
+    async def store_token(self, token: str) -> str:
+        return await self.__trello_auth_port.store_token(token)

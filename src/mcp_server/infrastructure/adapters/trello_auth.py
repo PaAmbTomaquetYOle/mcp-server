@@ -35,18 +35,16 @@ class TrelloAuthAdapter(ITrelloAuthPort):
         }
         return f"{TRELLO_AUTHORIZE_URL}?{urlencode(params)}"
 
-    async def store_tokens(self, token: str, token_secret: str) -> str:
+    async def store_token(self, token: str) -> str:
         if not token or not token.strip():
             raise TrelloTokenStorageException("unknown", "token must not be empty")
-        if not token_secret or not token_secret.strip():
-            raise TrelloTokenStorageException("unknown", "token_secret must not be empty")
 
         username = await self._resolve_username(token)
 
         await self.__token_storage.save_tokens(
             user_id=username,
             access_token=token,
-            refresh_token=token_secret,
+            refresh_token="",
             expires_at=0,
         )
         return username

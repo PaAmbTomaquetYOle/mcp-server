@@ -16,7 +16,7 @@ def mock_auth_service():
     service.generate_auth_url = AsyncMock(
         return_value="https://trello.com/1/authorize?key=test-key&name=TestApp"
     )
-    service.store_tokens = AsyncMock(return_value="johndoe")
+    service.store_token = AsyncMock(return_value="johndoe")
     return service
 
 
@@ -54,24 +54,20 @@ class TestCompleteTrelloAuth:
         controller = TrelloAuthToolController.__new__(TrelloAuthToolController)
         controller._TrelloAuthToolController__trello_auth_service = mock_auth_service
 
-        result = await controller.complete_trello_auth(
-            token="my-token", token_secret="my-secret"
-        )
+        result = await controller.complete_trello_auth(token="my-token")
 
         assert isinstance(result, CompleteTrelloAuthResponse)
         assert result.success is True
         assert result.user_id == "johndoe"
-        mock_auth_service.store_tokens.assert_awaited_once_with("my-token", "my-secret")
+        mock_auth_service.store_token.assert_awaited_once_with("my-token")
 
     @pytest.mark.anyio
     async def test_error_raises_tool_error(self, mock_auth_service):
-        mock_auth_service.store_tokens.side_effect = TrelloTokenStorageException(
+        mock_auth_service.store_token.side_effect = TrelloTokenStorageException(
             "unknown", "token must not be empty"
         )
         controller = TrelloAuthToolController.__new__(TrelloAuthToolController)
         controller._TrelloAuthToolController__trello_auth_service = mock_auth_service
 
         with pytest.raises(ToolError, match="token must not be empty"):
-            await controller.complete_trello_auth(
-                token="", token_secret="my-secret"
-            )
+            await controller.complete_trello_auth(token="")
