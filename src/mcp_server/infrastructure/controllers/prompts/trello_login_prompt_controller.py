@@ -14,6 +14,7 @@ class TrelloLoginPromptController(BaseController):
                 description="Guide the user through the Trello OAuth 1.0a authorization flow.",
                 fn=self.trello_login,
                 arguments=[],
+                context_kwarg=None,
             )
         )
 

@@ -20,6 +20,7 @@ class ExtractTrelloTasksPromptController(BaseController):
                         required=True,
                     ),
                 ],
+                context_kwarg=None,
             )
         )
 

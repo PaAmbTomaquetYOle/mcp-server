@@ -20,6 +20,7 @@ class ExtractJiraTasksPromptController(BaseController):
                         required=True,
                     ),
                 ],
+                context_kwarg=None,
             )
         )
 

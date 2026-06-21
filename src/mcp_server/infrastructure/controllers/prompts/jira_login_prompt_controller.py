@@ -14,6 +14,7 @@ class JiraLoginPromptController(BaseController):
                 description="Guide the user through the Jira OAuth 2.0 authorization flow.",
                 fn=self.jira_login,
                 arguments=[],
+                context_kwarg=None,
             )
         )
 
