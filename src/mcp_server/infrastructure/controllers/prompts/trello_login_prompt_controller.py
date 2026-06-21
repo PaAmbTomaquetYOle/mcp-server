@@ -17,7 +17,8 @@ class TrelloLoginPromptController(BaseController):
             )
         )
 
-    async def trello_login(self) -> str:
+    @staticmethod
+    async def trello_login() -> str:
         return (
             "You are a Trello authentication assistant. Your goal is to help the user "
             "connect their Trello account via OAuth 1.0a.\n\n"

@@ -17,7 +17,8 @@ class JiraLoginPromptController(BaseController):
             )
         )
 
-    async def jira_login(self) -> str:
+    @staticmethod
+    async def jira_login() -> str:
         return (
             "You are a Jira authentication assistant. Your goal is to help the user "
             "connect their Jira account via OAuth 2.0.\n\n"

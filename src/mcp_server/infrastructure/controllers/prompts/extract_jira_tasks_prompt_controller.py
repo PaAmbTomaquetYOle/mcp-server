@@ -23,7 +23,8 @@ class ExtractJiraTasksPromptController(BaseController):
             )
         )
 
-    async def extract_pending_jira_tasks(self, assignee: str) -> str:
+    @staticmethod
+    async def extract_pending_jira_tasks(assignee: str) -> str:
         return (
             f"You are a task extraction assistant. Your goal is to retrieve all pending tasks "
             f"assigned to '{assignee}' from JIRA.\n\n"

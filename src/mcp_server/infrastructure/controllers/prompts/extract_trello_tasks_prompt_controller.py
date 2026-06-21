@@ -23,7 +23,8 @@ class ExtractTrelloTasksPromptController(BaseController):
             )
         )
 
-    async def extract_pending_trello_tasks(self, assignee: str) -> str:
+    @staticmethod
+    async def extract_pending_trello_tasks(assignee: str) -> str:
         return (
             f"You are a task extraction assistant. Your goal is to retrieve all pending tasks "
             f"assigned to '{assignee}' from TRELLO.\n\n"
