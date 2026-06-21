@@ -12,10 +12,14 @@ What NOT to put here:
       application service. No direct IO or SDK calls beyond the MCP framework.
 """
 
-from .extract_tasks_controller import ExtractTasksPromptController
-from .jira_login_controller import JiraLoginPromptController
+from .extract_jira_tasks_prompt_controller import ExtractJiraTasksPromptController
+from .extract_trello_tasks_prompt_controller import ExtractTrelloTasksPromptController
+from .jira_login_prompt_controller import JiraLoginPromptController
+from .trello_login_prompt_controller import TrelloLoginPromptController
 
 __all__ = [
-    'ExtractTasksPromptController',
-    'JiraLoginPromptController',
+    "ExtractJiraTasksPromptController",
+    "ExtractTrelloTasksPromptController",
+    "JiraLoginPromptController",
+    "TrelloLoginPromptController",
 ]

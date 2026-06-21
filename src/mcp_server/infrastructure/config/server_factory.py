@@ -8,7 +8,12 @@ from mcp_server.application.ports import ITokenStoragePort
 from mcp_server.application.services import CollaborationToolIntegrationService, JiraAuthService, TrelloAuthService
 from mcp_server.infrastructure.adapters import JiraAdapter, JiraAuthAdapter, SqliteTokenStorage, TrelloAdapter, TrelloAuthAdapter
 from mcp_server.infrastructure.config.settings import McpServerSettings
-from mcp_server.infrastructure.controllers.prompts import ExtractTasksPromptController, JiraLoginPromptController
+from mcp_server.infrastructure.controllers.prompts import (
+    ExtractJiraTasksPromptController,
+    ExtractTrelloTasksPromptController,
+    JiraLoginPromptController,
+    TrelloLoginPromptController,
+)
 from mcp_server.infrastructure.controllers.routes import OAuthCallbackController
 from mcp_server.infrastructure.controllers.tools import (
     ExtractJiraTasksToolController,
@@ -150,8 +155,10 @@ class ServerFactory:
         TrelloAuthToolController(server, trello_auth_service).register()
 
     def _register_prompts(self, server: FastMCP) -> None:
-        ExtractTasksPromptController(server).register()
+        ExtractJiraTasksPromptController(server).register()
+        ExtractTrelloTasksPromptController(server).register()
         JiraLoginPromptController(server).register()
+        TrelloLoginPromptController(server).register()
 
     def _register_routes(self, server: FastMCP) -> None:
         jira_auth_service = self._create_jira_auth_service()
