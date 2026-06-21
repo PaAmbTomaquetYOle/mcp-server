@@ -16,6 +16,7 @@ from mcp_server.domain.exceptions import (
     TrelloAuthenticationException,
     TrelloCardNotFoundException,
     TrelloMemberNotFoundException,
+    TrelloTokenStorageException,
     UserTokensNotFoundException,
 )
 
@@ -32,6 +33,7 @@ ERROR_MESSAGES: dict[type[CollaborationToolException], str] = {
     TrelloCardNotFoundException: "The requested Trello card was not found.",
     TrelloMemberNotFoundException: "The specified Trello member was not found.",
     TrelloApiException: "Trello API error occurred.",
+    TrelloTokenStorageException: "Failed to store Trello tokens. Please verify the token and token_secret are valid.",
     AuthCodeExchangeException: "Failed to exchange authorization code. The code may be invalid or expired.",
 }
 

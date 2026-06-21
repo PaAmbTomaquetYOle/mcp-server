@@ -89,6 +89,15 @@ class TrelloAuthenticationException(CollaborationToolException):
         self.user_id = user_id
 
 
+class TrelloTokenStorageException(CollaborationToolException):
+    """Failed to store Trello OAuth tokens (e.g. empty token or token_secret)."""
+
+    def __init__(self, user_id: str, reason: str) -> None:
+        super().__init__(f"Trello token storage failed for user {user_id}: {reason}")
+        self.user_id = user_id
+        self.reason = reason
+
+
 class AuthCodeExchangeException(CollaborationToolException):
     """Failed to exchange an OAuth authorization code for tokens."""
 
