@@ -4,7 +4,7 @@ from mcp_server.infrastructure.controllers import BaseController
 
 
 class JiraLoginPromptController(BaseController):
-    """Controller that provides an MCP prompt to guide an agent through the Jira OAuth login flow."""
+    """Prompt controller that guides an agent through the Jira OAuth 2.0 login flow."""
 
     def register(self) -> None:
         self._server.add_prompt(
@@ -14,10 +14,12 @@ class JiraLoginPromptController(BaseController):
                 description="Guide the user through the Jira OAuth 2.0 authorization flow.",
                 fn=self.jira_login,
                 arguments=[],
+                context_kwarg=None,
             )
         )
 
-    async def jira_login(self) -> str:
+    @staticmethod
+    async def jira_login() -> str:
         return (
             "You are a Jira authentication assistant. Your goal is to help the user "
             "connect their Jira account via OAuth 2.0.\n\n"

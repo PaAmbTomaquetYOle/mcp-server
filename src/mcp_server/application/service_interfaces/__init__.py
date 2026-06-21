@@ -16,8 +16,10 @@ What NOT to put here:
 
 from .collaboration_tool_integration_service_interface import ICollaborationToolIntegrationService
 from .jira_auth_service_interface import IJiraAuthService
+from .trello_auth_service_interface import ITrelloAuthService
 
 __all__ = [
     "ICollaborationToolIntegrationService",
     "IJiraAuthService",
+    "ITrelloAuthService",
 ]

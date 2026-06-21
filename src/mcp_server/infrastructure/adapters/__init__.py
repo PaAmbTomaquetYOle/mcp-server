@@ -18,10 +18,12 @@ from .jira import JiraAdapter
 from .jira_auth import JiraAuthAdapter
 from .sqlite_token_storage import SqliteTokenStorage
 from .trello import TrelloAdapter
+from .trello_auth import TrelloAuthAdapter
 
 __all__ = [
     "SqliteTokenStorage",
     "JiraAdapter",
     "JiraAuthAdapter",
     "TrelloAdapter",
+    "TrelloAuthAdapter",
 ]

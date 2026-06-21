@@ -19,11 +19,13 @@ What NOT to put here:
 from .collaboration_tool import ICollaborationToolPort
 from .jira_auth import IJiraAuthPort
 from .token_storage import AuthResult, ITokenStoragePort, TokenData
+from .trello_auth import ITrelloAuthPort
 
 __all__ = [
     "AuthResult",
     "ICollaborationToolPort",
     "IJiraAuthPort",
     "ITokenStoragePort",
+    "ITrelloAuthPort",
     "TokenData",
 ]

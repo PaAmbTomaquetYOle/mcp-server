@@ -51,27 +51,24 @@ class TrelloAdapter(ICollaborationToolPort):
         tokens: TokenData | None = await self.__token_storage.get_tokens(user_id)
         if tokens is None:
             raise UserTokensNotFoundException(user_id)
-        if not tokens["access_token"] or not tokens["refresh_token"]:
+        if not tokens["access_token"]:
             raise UserTokensNotFoundException(user_id)
         return tokens
 
-    def _build_client(self, token: str, token_secret: str) -> TrelloClient:
+    def _build_client(self, token: str) -> TrelloClient:
         """
-        Build and return a TrelloClient instance authenticated with the provided token and token secret.
+        Build and return a TrelloClient instance authenticated with the provided token.
 
         Args:
             token (str): The OAuth access token for Trello.
-            token_secret (str): The OAuth token secret for Trello.
         Returns:
             TrelloClient: An instance of TrelloClient authenticated with the provided credentials.
         """
-        # Trello's "basic OAuth" is OAuth 1.0a: token and token_secret are the
-        # credential pair the client needs to sign requests.
         return TrelloClient(
             api_key=self.__api_key,
             api_secret=self.__api_secret,
             token=token,
-            token_secret=token_secret,
+            token_secret=self.__api_secret,
         )
 
     async def _get_client(self, user_id: str) -> TrelloClient:
@@ -88,7 +85,7 @@ class TrelloAdapter(ICollaborationToolPort):
         """
         tokens = await self._get_tokens(user_id)
         try:
-            return self._build_client(tokens["access_token"], tokens["refresh_token"])
+            return self._build_client(tokens["access_token"])
         except Unauthorized as exc:
             raise TrelloAuthenticationException(user_id) from exc
 
