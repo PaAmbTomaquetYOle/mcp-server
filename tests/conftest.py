@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from unittest.mock import AsyncMock
 
 import pytest
 from mcp.server import FastMCP
@@ -44,8 +45,6 @@ def parse_sse_data(response_text: str) -> dict:
 
 
 # === Mock fixtures para APIs externas ===
-
-from unittest.mock import AsyncMock
 
 @pytest.fixture
 def anyio_backend():
