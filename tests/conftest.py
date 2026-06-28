@@ -48,6 +48,10 @@ def parse_sse_data(response_text: str) -> dict:
 from unittest.mock import AsyncMock
 
 @pytest.fixture
+def anyio_backend():
+    return 'asyncio'
+
+@pytest.fixture
 def mock_token_storage():
     """Reusable mock for ITokenStoragePort (driven port)."""
     storage = AsyncMock()
