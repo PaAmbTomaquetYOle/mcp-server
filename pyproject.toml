@@ -32,6 +32,8 @@ artifacts = ["src/mcp_server/**/*.html"]
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "pytest-cov>=6.2.0",
+    "anyio[trio]>=4.9.0",
     "httpx2>=2.4.0",
     "ruff>=0.15.18",
 ]
@@ -45,3 +47,23 @@ select = ["E", "F", "I"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "unit: Unit tests (isolated, no I/O)",
+    "integration: Integration tests (MCP handshake, SSE, DB)",
+]
+
+[tool.coverage.run]
+source = ["mcp_server"]
+omit = [
+    "*/dev.py",
+    "*/templates/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 60
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+]
