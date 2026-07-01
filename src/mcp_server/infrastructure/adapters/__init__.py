@@ -14,6 +14,7 @@ What NOT to put here:
       adapt). Domain decisions belong in ``domain``/``application``.
 """
 
+from .backend_api import BackendApiAdapter
 from .jira import JiraAdapter
 from .jira_auth import JiraAuthAdapter
 from .sqlite_token_storage import SqliteTokenStorage
@@ -21,6 +22,7 @@ from .trello import TrelloAdapter
 from .trello_auth import TrelloAuthAdapter
 
 __all__ = [
+    "BackendApiAdapter",
     "SqliteTokenStorage",
     "JiraAdapter",
     "JiraAuthAdapter",
