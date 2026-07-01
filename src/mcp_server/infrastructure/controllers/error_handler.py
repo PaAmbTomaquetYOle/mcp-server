@@ -6,6 +6,7 @@ from mcp.server.fastmcp.exceptions import ToolError
 
 from mcp_server.domain.exceptions import (
     AuthCodeExchangeException,
+    BackendApiException,
     CollaborationToolException,
     IssueNotFoundException,
     JiraApiException,
@@ -35,6 +36,7 @@ ERROR_MESSAGES: dict[type[CollaborationToolException], str] = {
     TrelloApiException: "Trello API error occurred.",
     TrelloTokenStorageException: "Failed to store Trello token. Please verify the token is valid.",
     AuthCodeExchangeException: "Failed to exchange authorization code. The code may be invalid or expired.",
+    BackendApiException: "Failed to reach the backend API or it returned an error.",
 }
 
 
