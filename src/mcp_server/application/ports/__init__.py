@@ -16,6 +16,7 @@ What NOT to put here:
     - Any framework, SDK, or IO code.
 """
 
+from .backend_api import IBackendApiPort
 from .collaboration_tool import ICollaborationToolPort
 from .jira_auth import IJiraAuthPort
 from .token_storage import AuthResult, ITokenStoragePort, TokenData
@@ -23,6 +24,7 @@ from .trello_auth import ITrelloAuthPort
 
 __all__ = [
     "AuthResult",
+    "IBackendApiPort",
     "ICollaborationToolPort",
     "IJiraAuthPort",
     "ITokenStoragePort",
