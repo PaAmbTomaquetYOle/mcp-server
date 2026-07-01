@@ -475,15 +475,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiosqlite", specifier = ">=0.22.1" },
-    { name = "httpx2", specifier = ">=2.5.0" },
-    { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "jira", specifier = ">=3.10.5" },
-    { name = "mcp", specifier = ">=1.28.1" },
-    { name = "py-trello", specifier = ">=0.20.1" },
-    { name = "pydantic", specifier = ">=2.13.4" },
-    { name = "pydantic-settings", specifier = ">=2.14.2" },
-    { name = "starlette", specifier = ">=1.3.1" },
+    { name = "aiosqlite", specifier = "==0.22.1" },
+    { name = "httpx2", specifier = "==2.5.0" },
+    { name = "jinja2", specifier = "==3.1.6" },
+    { name = "jira", specifier = "==3.10.5" },
+    { name = "mcp", specifier = "==1.28.1" },
+    { name = "py-trello", specifier = "==0.20.1" },
+    { name = "pydantic", specifier = "==2.13.4" },
+    { name = "pydantic-settings", specifier = "==2.14.2" },
+    { name = "starlette", specifier = "==1.3.1" },
 ]
 
 [package.metadata.requires-dev]
