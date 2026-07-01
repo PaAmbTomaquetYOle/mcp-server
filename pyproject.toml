@@ -5,15 +5,16 @@ description = "MCP server to give functionalities to the agent"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "aiosqlite>=0.21.0",
-    "httpx2>=2.4.0",
-    "jinja2>=3.1.6",
-    "jira>=3.10.5",
-    "mcp>=1.28.0",
-    "py-trello>=0.20.1",
-    "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.2",
-    "starlette>=1.3.1",
+    "aiosqlite==0.22.1",
+    "httpx2==2.5.0",
+    "jinja2==3.1.6",
+    "jira==3.10.5",
+    "mcp==1.28.1",
+    "py-trello==0.20.1",
+    "pydantic==2.13.4",
+    "pyjwt==2.13.0",
+    "pydantic-settings==2.14.2",
+    "starlette==1.3.1",
 ]
 
 [project.scripts]
@@ -32,10 +33,9 @@ artifacts = ["src/mcp_server/**/*.html"]
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
-    "pytest-cov>=6.2.0",
-    "anyio>=4.9.0",
-    "httpx2>=2.4.0",
-    "ruff>=0.15.18",
+    "pytest-cov>=7.1.0",
+    "anyio>=4.14.1",
+    "ruff>=0.15.20",
 ]
 
 [tool.ruff]

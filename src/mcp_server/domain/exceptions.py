@@ -98,6 +98,14 @@ class TrelloTokenStorageException(CollaborationToolException):
         self.reason = reason
 
 
+class BackendApiException(CollaborationToolException):
+    """The backend API returned an error or is unreachable."""
+
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
 class AuthCodeExchangeException(CollaborationToolException):
     """Failed to exchange an OAuth authorization code for tokens."""
 

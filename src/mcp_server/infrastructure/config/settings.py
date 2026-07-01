@@ -29,6 +29,10 @@ class McpServerSettings(BaseSettings):
     trello_app_name: str = "BrainTrust"
     token_db_path: str = "data/tokens.db"
 
+    backend_api_url: str = "http://localhost:8001/api/v1"
+    backend_jwt_secret: str = ""
+    backend_jwt_issuer: str = "mcp-server"
+
     @model_validator(mode="after")
     def _derive_urls(self) -> Self:
         if not self.base_url:
