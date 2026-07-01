@@ -27,6 +27,10 @@ __all__ = [
     "GenerateJiraAuthResponse",
     "GenerateTrelloAuthResponse",
     "PingResult",
+    "DossierContact",
+    "DossierKnowledgeArea",
+    "DossierPendingTask",
     "DossierSearchResult",
+    "DossierSection",
     "GetDossierResponse",
 ]
