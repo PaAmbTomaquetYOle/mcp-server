@@ -4,9 +4,16 @@ import threading
 
 from mcp.server import FastMCP
 
-from mcp_server.application.ports import ITokenStoragePort
+from mcp_server.application.ports import IBackendApiPort, ITokenStoragePort
 from mcp_server.application.services import CollaborationToolIntegrationService, JiraAuthService, TrelloAuthService
-from mcp_server.infrastructure.adapters import JiraAdapter, JiraAuthAdapter, SqliteTokenStorage, TrelloAdapter, TrelloAuthAdapter
+from mcp_server.infrastructure.adapters import (
+    BackendApiAdapter,
+    JiraAdapter,
+    JiraAuthAdapter,
+    SqliteTokenStorage,
+    TrelloAdapter,
+    TrelloAuthAdapter,
+)
 from mcp_server.infrastructure.config.settings import McpServerSettings
 from mcp_server.infrastructure.controllers.prompts import (
     ExtractJiraTasksPromptController,
@@ -18,6 +25,7 @@ from mcp_server.infrastructure.controllers.routes import OAuthCallbackController
 from mcp_server.infrastructure.controllers.tools import (
     ExtractJiraTasksToolController,
     ExtractTrelloTasksToolController,
+    GetDossierToolController,
     JiraAuthToolController,
     PingToolController,
     TrelloAuthToolController,
@@ -139,6 +147,13 @@ class ServerFactory:
         trello_service = CollaborationToolIntegrationService(trello_adapter)
         return trello_service
 
+    def _create_backend_api_adapter(self) -> IBackendApiPort:
+        return BackendApiAdapter(
+            base_url=self._settings.backend_api_url,
+            jwt_secret=self._settings.backend_jwt_secret,
+            jwt_issuer=self._settings.backend_jwt_issuer,
+        )
+
     def _register_tools(self, server: FastMCP) -> None:
         PingToolController(server).register()
 
@@ -153,6 +168,9 @@ class ServerFactory:
 
         trello_auth_service = self._create_trello_auth_service()
         TrelloAuthToolController(server, trello_auth_service).register()
+
+        backend_api_adapter = self._create_backend_api_adapter()
+        GetDossierToolController(server, backend_api_adapter).register()
 
     def _register_prompts(self, server: FastMCP) -> None:
         ExtractJiraTasksPromptController(server).register()
