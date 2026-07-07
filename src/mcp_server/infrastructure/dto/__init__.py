@@ -35,6 +35,7 @@ __all__ = [
     "DossierPendingTask",
     "DossierSearchResult",
     "DossierSection",
+    "GenerateDossierResponse",
     "GetDossierResponse",
     "RefreshResponse",
     "SearchAnalyticsResponse",

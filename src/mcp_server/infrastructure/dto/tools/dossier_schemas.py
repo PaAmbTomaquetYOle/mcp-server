@@ -51,3 +51,8 @@ class GetDossierResponse(BaseModel):
         description="Handover dossiers matching the search criteria.",
     )
     count: int = Field(title="Result Count")
+
+
+class GenerateDossierResponse(BaseModel):
+    summary: str | None = Field(default=None, title="Summary")
+    sections: list[DossierSection] = Field(default_factory=list, title="Sections")

@@ -15,6 +15,7 @@ What NOT to put here:
 """
 
 from .collaboration_tool_integration_service_interface import ICollaborationToolIntegrationService
+from .dossier_generation_service_interface import IDossierGenerationService
 from .jira_auth_service_interface import IJiraAuthService
 from .search_connector_service_interface import ConnectorStatus, ISearchConnectorService
 from .slack_auth_service_interface import ISlackAuthService
@@ -24,6 +25,7 @@ from .trello_auth_service_interface import ITrelloAuthService
 __all__ = [
     "ConnectorStatus",
     "ICollaborationToolIntegrationService",
+    "IDossierGenerationService",
     "IJiraAuthService",
     "ISearchConnectorService",
     "ISlackAuthService",
