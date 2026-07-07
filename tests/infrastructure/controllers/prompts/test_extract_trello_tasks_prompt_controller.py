@@ -31,3 +31,17 @@ class TestExtractPendingTrelloTasks:
         controller = ExtractTrelloTasksPromptController.__new__(ExtractTrelloTasksPromptController)
         result = await controller.extract_pending_trello_tasks(assignee="jane")
         assert "jane" in result
+
+    @pytest.mark.anyio
+    async def test_explains_auth_recovery_tools(self):
+        controller = ExtractTrelloTasksPromptController.__new__(ExtractTrelloTasksPromptController)
+        result = await controller.extract_pending_trello_tasks(assignee="jane")
+        assert "generate_trello_auth_url" in result
+        assert "complete_trello_auth" in result
+
+    @pytest.mark.anyio
+    async def test_explains_auth_recovery_sequence(self):
+        controller = ExtractTrelloTasksPromptController.__new__(ExtractTrelloTasksPromptController)
+        result = await controller.extract_pending_trello_tasks(assignee="jane")
+        assert "not authenticated" in result
+        assert "retry" in result.lower()
