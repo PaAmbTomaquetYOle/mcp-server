@@ -14,6 +14,7 @@ What NOT to put here:
 
 from .extract_jira_tasks_controller import ExtractJiraTasksToolController
 from .extract_trello_tasks_controller import ExtractTrelloTasksToolController
+from .generate_dossier_controller import GenerateDossierToolController
 from .get_dossier_controller import GetDossierToolController
 from .jira_auth_controller import JiraAuthToolController
 from .ping_controller import PingToolController
@@ -26,6 +27,7 @@ __all__ = [
     "PingToolController",
     "ExtractJiraTasksToolController",
     "ExtractTrelloTasksToolController",
+    "GenerateDossierToolController",
     "GetDossierToolController",
     "JiraAuthToolController",
     "SearchConnectorToolController",
