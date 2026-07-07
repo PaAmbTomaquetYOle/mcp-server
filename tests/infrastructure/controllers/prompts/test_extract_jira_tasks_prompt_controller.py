@@ -31,3 +31,17 @@ class TestExtractPendingJiraTasks:
         controller = ExtractJiraTasksPromptController.__new__(ExtractJiraTasksPromptController)
         result = await controller.extract_pending_jira_tasks(assignee="john")
         assert "john" in result
+
+    @pytest.mark.anyio
+    async def test_explains_auth_recovery_tools(self):
+        controller = ExtractJiraTasksPromptController.__new__(ExtractJiraTasksPromptController)
+        result = await controller.extract_pending_jira_tasks(assignee="john")
+        assert "generate_jira_auth_url" in result
+        assert "complete_jira_auth" in result
+
+    @pytest.mark.anyio
+    async def test_explains_auth_recovery_sequence(self):
+        controller = ExtractJiraTasksPromptController.__new__(ExtractJiraTasksPromptController)
+        result = await controller.extract_pending_jira_tasks(assignee="john")
+        assert "not authenticated" in result
+        assert "retry" in result.lower()
