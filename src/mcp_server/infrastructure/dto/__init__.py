@@ -23,8 +23,11 @@ from .tools import *
 
 __all__ = [
     "CompleteJiraAuthResponse",
+    "CompleteSlackAuthResponse",
     "CompleteTrelloAuthResponse",
+    "ConnectorStatusResponse",
     "GenerateJiraAuthResponse",
+    "GenerateSlackAuthResponse",
     "GenerateTrelloAuthResponse",
     "PingResult",
     "DossierContact",
@@ -33,4 +36,10 @@ __all__ = [
     "DossierSearchResult",
     "DossierSection",
     "GetDossierResponse",
+    "RefreshResponse",
+    "SearchAnalyticsResponse",
+    "SearchResultItem",
+    "SearchQueryTestResponse",
+    "SlackWorkspaceSearchResponse",
+    "SlackWorkspaceSearchResultItem",
 ]

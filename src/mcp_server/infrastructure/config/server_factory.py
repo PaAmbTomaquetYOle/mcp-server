@@ -4,12 +4,29 @@ import threading
 
 from mcp.server import FastMCP
 
-from mcp_server.application.ports import IBackendApiPort, ITokenStoragePort
-from mcp_server.application.services import CollaborationToolIntegrationService, JiraAuthService, TrelloAuthService
+from mcp_server.application.ports import (
+    IBackendApiPort,
+    ISlackApiPort,
+    ISopCachePort,
+    ITokenStoragePort,
+)
+from mcp_server.application.service_interfaces import ISearchConnectorService
+from mcp_server.application.services import (
+    CollaborationToolIntegrationService,
+    JiraAuthService,
+    SearchConnectorService,
+    SlackAuthService,
+    SlackWorkspaceSearchService,
+    TrelloAuthService,
+)
 from mcp_server.infrastructure.adapters import (
     BackendApiAdapter,
+    InMemorySopCacheAdapter,
     JiraAdapter,
     JiraAuthAdapter,
+    SlackApiAdapter,
+    SlackAuthAdapter,
+    SlackWorkspaceSearchAdapter,
     SqliteTokenStorage,
     TrelloAdapter,
     TrelloAuthAdapter,
@@ -19,15 +36,24 @@ from mcp_server.infrastructure.controllers.prompts import (
     ExtractJiraTasksPromptController,
     ExtractTrelloTasksPromptController,
     JiraLoginPromptController,
+    SearchConnectorPromptController,
+    SlackLoginPromptController,
     TrelloLoginPromptController,
 )
-from mcp_server.infrastructure.controllers.routes import OAuthCallbackController
+from mcp_server.infrastructure.controllers.routes import (
+    OAuthCallbackController,
+    SlackEventsRouteController,
+    SlackOAuthCallbackController,
+)
 from mcp_server.infrastructure.controllers.tools import (
     ExtractJiraTasksToolController,
     ExtractTrelloTasksToolController,
     GetDossierToolController,
     JiraAuthToolController,
     PingToolController,
+    SearchConnectorToolController,
+    SlackAuthToolController,
+    SlackWorkspaceSearchToolController,
     TrelloAuthToolController,
 )
 
@@ -52,6 +78,7 @@ class ServerFactory:
                 " Use ServerFactory.get_instance() instead."
             )
         self._settings = settings
+        self._search_connector_service: ISearchConnectorService | None = None
 
     @classmethod
     def get_instance(cls, settings: McpServerSettings) -> ServerFactory:
@@ -154,6 +181,39 @@ class ServerFactory:
             jwt_issuer=self._settings.backend_jwt_issuer,
         )
 
+    def _create_slack_api_adapter(self) -> ISlackApiPort:
+        return SlackApiAdapter(bot_token=self._settings.slack_bot_token)
+
+    def _create_slack_auth_adapter(self) -> SlackAuthAdapter:
+        return SlackAuthAdapter(
+            token_storage_port=self._create_token_storage(),
+            client_id=self._settings.slack_client_id,
+            client_secret=self._settings.slack_client_secret,
+            redirect_uri=self._settings.slack_redirect_uri,
+        )
+
+    def _create_slack_auth_service(self) -> SlackAuthService:
+        return SlackAuthService(self._create_slack_auth_adapter())
+
+    def _create_slack_workspace_search_service(self) -> SlackWorkspaceSearchService:
+        return SlackWorkspaceSearchService(
+            token_storage=self._create_token_storage(),
+            workspace_search_port=SlackWorkspaceSearchAdapter(),
+        )
+
+    def _create_sop_cache_adapter(self) -> ISopCachePort:
+        return InMemorySopCacheAdapter(ttl_seconds=self._settings.sop_cache_ttl_seconds)
+
+    def get_search_connector_service(self) -> ISearchConnectorService:
+        """Return the singleton search connector service, shared by tools, routes, and the cache-refresh task."""
+        if self._search_connector_service is None:
+            self._search_connector_service = SearchConnectorService(
+                backend_api=self._create_backend_api_adapter(),
+                sop_cache=self._create_sop_cache_adapter(),
+                sop_base_url=self._settings.sop_base_url,
+            )
+        return self._search_connector_service
+
     def _register_tools(self, server: FastMCP) -> None:
         PingToolController(server).register()
 
@@ -172,12 +232,32 @@ class ServerFactory:
         backend_api_adapter = self._create_backend_api_adapter()
         GetDossierToolController(server, backend_api_adapter).register()
 
+        search_connector_service = self.get_search_connector_service()
+        SearchConnectorToolController(server, search_connector_service).register()
+
+        slack_auth_service = self._create_slack_auth_service()
+        SlackAuthToolController(server, slack_auth_service).register()
+
+        slack_workspace_search_service = self._create_slack_workspace_search_service()
+        SlackWorkspaceSearchToolController(server, slack_workspace_search_service).register()
+
     def _register_prompts(self, server: FastMCP) -> None:
         ExtractJiraTasksPromptController(server).register()
         ExtractTrelloTasksPromptController(server).register()
         JiraLoginPromptController(server).register()
         TrelloLoginPromptController(server).register()
+        SearchConnectorPromptController(server).register()
+        SlackLoginPromptController(server).register()
 
     def _register_routes(self, server: FastMCP) -> None:
         jira_auth_service = self._create_jira_auth_service()
         OAuthCallbackController(server, jira_auth_service).register()
+
+        search_connector_service = self.get_search_connector_service()
+        slack_api_adapter = self._create_slack_api_adapter()
+        SlackEventsRouteController(
+            server, search_connector_service, slack_api_adapter, signing_secret=self._settings.slack_signing_secret
+        ).register()
+
+        slack_auth_service = self._create_slack_auth_service()
+        SlackOAuthCallbackController(server, slack_auth_service).register()

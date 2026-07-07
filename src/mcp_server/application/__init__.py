@@ -20,9 +20,9 @@ What NOT to put here:
       ``infrastructure`` as adapters).
 """
 
+from .ports import ICollaborationToolPort
 from .service_interfaces import ICollaborationToolIntegrationService
 from .services import CollaborationToolIntegrationService
-from .ports import ICollaborationToolPort
 
 __all__ = [
     "ICollaborationToolIntegrationService",

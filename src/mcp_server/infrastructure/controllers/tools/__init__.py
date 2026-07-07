@@ -17,6 +17,9 @@ from .extract_trello_tasks_controller import ExtractTrelloTasksToolController
 from .get_dossier_controller import GetDossierToolController
 from .jira_auth_controller import JiraAuthToolController
 from .ping_controller import PingToolController
+from .search_connector_controller import SearchConnectorToolController
+from .slack_auth_controller import SlackAuthToolController
+from .slack_workspace_search_controller import SlackWorkspaceSearchToolController
 from .trello_auth_controller import TrelloAuthToolController
 
 __all__ = [
@@ -25,5 +28,8 @@ __all__ = [
     "ExtractTrelloTasksToolController",
     "GetDossierToolController",
     "JiraAuthToolController",
+    "SearchConnectorToolController",
+    "SlackAuthToolController",
+    "SlackWorkspaceSearchToolController",
     "TrelloAuthToolController",
 ]

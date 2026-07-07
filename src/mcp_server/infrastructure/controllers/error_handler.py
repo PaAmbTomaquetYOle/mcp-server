@@ -12,6 +12,8 @@ from mcp_server.domain.exceptions import (
     JiraApiException,
     JiraAuthenticationException,
     JiraUserNotFoundException,
+    SlackApiException,
+    SopCacheException,
     TokenRefreshException,
     TrelloApiException,
     TrelloAuthenticationException,
@@ -37,6 +39,8 @@ ERROR_MESSAGES: dict[type[CollaborationToolException], str] = {
     TrelloTokenStorageException: "Failed to store Trello token. Please verify the token is valid.",
     AuthCodeExchangeException: "Failed to exchange authorization code. The code may be invalid or expired.",
     BackendApiException: "Failed to reach the backend API or it returned an error.",
+    SlackApiException: "Failed to reach the Slack API or it returned an error.",
+    SopCacheException: "Failed to refresh the SOP search cache.",
 }
 
 

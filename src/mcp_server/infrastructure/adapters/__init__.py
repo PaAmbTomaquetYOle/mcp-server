@@ -17,15 +17,23 @@ What NOT to put here:
 from .backend_api import BackendApiAdapter
 from .jira import JiraAdapter
 from .jira_auth import JiraAuthAdapter
+from .slack_api import SlackApiAdapter
+from .slack_auth import SlackAuthAdapter
+from .slack_workspace_search import SlackWorkspaceSearchAdapter
+from .sop_cache import InMemorySopCacheAdapter
 from .sqlite_token_storage import SqliteTokenStorage
 from .trello import TrelloAdapter
 from .trello_auth import TrelloAuthAdapter
 
 __all__ = [
     "BackendApiAdapter",
+    "InMemorySopCacheAdapter",
     "SqliteTokenStorage",
     "JiraAdapter",
     "JiraAuthAdapter",
+    "SlackApiAdapter",
+    "SlackAuthAdapter",
+    "SlackWorkspaceSearchAdapter",
     "TrelloAdapter",
     "TrelloAuthAdapter",
 ]

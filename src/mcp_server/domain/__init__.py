@@ -24,6 +24,7 @@ isolation.
 from .enums import *
 from .collaboration_tasks import *
 from .exceptions import *
+from .search import SearchDocument, SearchQuery, SlackWorkspaceSearchResult
 
 __all__ = [
     "CollaborationToolEnum",
@@ -41,4 +42,11 @@ __all__ = [
     "TokenRefreshException",
     "UserTokensNotFoundException",
     "AuthCodeExchangeException",
+    "SlackSearchException",
+    "SlackApiException",
+    "SopCacheException",
+    "SearchTimeoutException",
+    "SearchDocument",
+    "SearchQuery",
+    "SlackWorkspaceSearchResult",
 ]

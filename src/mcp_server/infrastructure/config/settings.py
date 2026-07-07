@@ -33,10 +33,22 @@ class McpServerSettings(BaseSettings):
     backend_jwt_secret: str = ""
     backend_jwt_issuer: str = "mcp-server"
 
+    slack_bot_token: str = ""
+    slack_signing_secret: str = ""
+    slack_client_id: str = ""
+    slack_client_secret: str = ""
+    slack_redirect_uri: str = ""
+    sop_cache_ttl_seconds: int = 60
+    sop_base_url: str = ""
+
     @model_validator(mode="after")
     def _derive_urls(self) -> Self:
         if not self.base_url:
             self.base_url = f"http://localhost:{self.port}"
         if not self.jira_redirect_uri:
             self.jira_redirect_uri = f"{self.base_url}/callback"
+        if not self.sop_base_url:
+            self.sop_base_url = f"{self.base_url}/sops"
+        if not self.slack_redirect_uri:
+            self.slack_redirect_uri = f"{self.base_url}/slack/oauth/callback"
         return self
