@@ -80,3 +80,49 @@ class BackendApiAdapter(IBackendApiPort):
                 ) from exc
             except Exception as exc:
                 raise BackendApiException(f"Failed to reach backend API: {exc}") from exc
+
+    async def search_sops(
+        self,
+        text: str | None = None,
+        tags: list[str] | None = None,
+        page: int = 1,
+        size: int = 20,
+    ) -> dict:
+        params: dict[str, Any] = {"page": page, "size": size}
+        if text is not None:
+            params["q"] = text
+        if tags:
+            params["tags"] = tags
+
+        async with AsyncClient() as client:
+            try:
+                response = await client.get(
+                    f"{self.__base_url}/sops?{urlencode(params, doseq=True)}",
+                    headers=self._auth_headers(),
+                )
+                response.raise_for_status()
+                return response.json()
+            except HTTPStatusError as exc:
+                raise BackendApiException(
+                    f"Backend returned HTTP {exc.response.status_code} for SOP search",
+                    status_code=exc.response.status_code,
+                ) from exc
+            except Exception as exc:
+                raise BackendApiException(f"Failed to reach backend API: {exc}") from exc
+
+    async def get_sop(self, sop_id: str) -> dict:
+        async with AsyncClient() as client:
+            try:
+                response = await client.get(
+                    f"{self.__base_url}/sops/{sop_id}",
+                    headers=self._auth_headers(),
+                )
+                response.raise_for_status()
+                return response.json()
+            except HTTPStatusError as exc:
+                raise BackendApiException(
+                    f"Backend returned HTTP {exc.response.status_code} for SOP {sop_id}",
+                    status_code=exc.response.status_code,
+                ) from exc
+            except Exception as exc:
+                raise BackendApiException(f"Failed to reach backend API: {exc}") from exc
