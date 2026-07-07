@@ -15,11 +15,15 @@ What NOT to put here:
 from .extract_jira_tasks_prompt_controller import ExtractJiraTasksPromptController
 from .extract_trello_tasks_prompt_controller import ExtractTrelloTasksPromptController
 from .jira_login_prompt_controller import JiraLoginPromptController
+from .search_connector_prompt_controller import SearchConnectorPromptController
+from .slack_login_prompt_controller import SlackLoginPromptController
 from .trello_login_prompt_controller import TrelloLoginPromptController
 
 __all__ = [
     "ExtractJiraTasksPromptController",
     "ExtractTrelloTasksPromptController",
     "JiraLoginPromptController",
+    "SearchConnectorPromptController",
+    "SlackLoginPromptController",
     "TrelloLoginPromptController",
 ]
