@@ -2,7 +2,7 @@ from urllib.parse import urlencode
 
 from httpx2 import AsyncClient, HTTPStatusError
 
-from mcp_server.application.ports import ITrelloAuthPort, ITokenStoragePort
+from mcp_server.application.ports import ITokenStoragePort, ITrelloAuthPort
 from mcp_server.domain.exceptions import TrelloTokenStorageException
 
 TRELLO_AUTHORIZE_URL = "https://trello.com/1/authorize"

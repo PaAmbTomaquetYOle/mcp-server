@@ -1,7 +1,8 @@
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
 from mcp_server.domain import CollaborationToolEnum
 from mcp_server.domain.collaboration_tasks import CollaborationTask
+
 
 class JiraUser(BaseModel):
     """Represents a Jira user."""
