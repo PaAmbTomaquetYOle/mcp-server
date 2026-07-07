@@ -6,6 +6,7 @@ from .dossier_schemas import (
     DossierPendingTask,
     DossierSearchResult,
     DossierSection,
+    GenerateDossierResponse,
     GetDossierResponse,
 )
 from .jira_auth_schemas import CompleteJiraAuthResponse, GenerateJiraAuthResponse
@@ -32,6 +33,7 @@ __all__ = [
     "DossierPendingTask",
     "DossierSearchResult",
     "DossierSection",
+    "GenerateDossierResponse",
     "GetDossierResponse",
     "GenerateJiraAuthResponse",
     "GenerateSlackAuthResponse",

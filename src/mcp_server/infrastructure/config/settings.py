@@ -41,6 +41,11 @@ class McpServerSettings(BaseSettings):
     sop_cache_ttl_seconds: int = 60
     sop_base_url: str = ""
 
+    # generate_dossier tool (DossierGenerationService)
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-5-20250929"
+    dossier_generation_max_tool_iterations: int = 4
+
     @model_validator(mode="after")
     def _derive_urls(self) -> Self:
         if not self.base_url:

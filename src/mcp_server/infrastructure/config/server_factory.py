@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 
+from anthropic import AsyncAnthropic
 from mcp.server import FastMCP
 
 from mcp_server.application.ports import (
@@ -10,9 +11,13 @@ from mcp_server.application.ports import (
     ISopCachePort,
     ITokenStoragePort,
 )
-from mcp_server.application.service_interfaces import ISearchConnectorService
+from mcp_server.application.service_interfaces import (
+    IDossierGenerationService,
+    ISearchConnectorService,
+)
 from mcp_server.application.services import (
     CollaborationToolIntegrationService,
+    DossierGenerationService,
     JiraAuthService,
     SearchConnectorService,
     SlackAuthService,
@@ -48,6 +53,7 @@ from mcp_server.infrastructure.controllers.routes import (
 from mcp_server.infrastructure.controllers.tools import (
     ExtractJiraTasksToolController,
     ExtractTrelloTasksToolController,
+    GenerateDossierToolController,
     GetDossierToolController,
     JiraAuthToolController,
     PingToolController,
@@ -204,6 +210,15 @@ class ServerFactory:
     def _create_sop_cache_adapter(self) -> ISopCachePort:
         return InMemorySopCacheAdapter(ttl_seconds=self._settings.sop_cache_ttl_seconds)
 
+    def _create_dossier_generation_service(self) -> IDossierGenerationService:
+        return DossierGenerationService(
+            anthropic_client=AsyncAnthropic(api_key=self._settings.anthropic_api_key),
+            model=self._settings.anthropic_model,
+            backend_api=self._create_backend_api_adapter(),
+            search_connector=self.get_search_connector_service(),
+            max_tool_iterations=self._settings.dossier_generation_max_tool_iterations,
+        )
+
     def get_search_connector_service(self) -> ISearchConnectorService:
         """Return the singleton search connector service, shared by tools, routes, and the cache-refresh task."""
         if self._search_connector_service is None:
@@ -231,6 +246,9 @@ class ServerFactory:
 
         backend_api_adapter = self._create_backend_api_adapter()
         GetDossierToolController(server, backend_api_adapter).register()
+
+        dossier_generation_service = self._create_dossier_generation_service()
+        GenerateDossierToolController(server, dossier_generation_service).register()
 
         search_connector_service = self.get_search_connector_service()
         SearchConnectorToolController(server, search_connector_service).register()
