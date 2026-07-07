@@ -115,3 +115,31 @@ class AuthCodeExchangeException(CollaborationToolException):
         )
         self.user_id = user_id
         self.reason = reason
+
+
+class SlackSearchException(CollaborationToolException):
+    """Base exception for the Slack search connector."""
+
+
+class SlackApiException(SlackSearchException):
+    """The Slack API returned an error or is unreachable."""
+
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class SopCacheException(SlackSearchException):
+    """Failed to refresh the in-memory SOP search cache."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(f"SOP cache refresh failed: {reason}")
+        self.reason = reason
+
+
+class SearchTimeoutException(SlackSearchException):
+    """A search took longer than the Slack function-execution deadline."""
+
+    def __init__(self, query: str) -> None:
+        super().__init__(f"Search timed out for query: {query}")
+        self.query = query
