@@ -5,7 +5,10 @@ description = "MCP server to give functionalities to the agent"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "fastapi>=0.136.3",
     "mcp>=1.27.2",
+    "pydantic-settings>=2.14.1",
+    "uvicorn[standard]>=0.49.0",
 ]
 
 [project.scripts]
