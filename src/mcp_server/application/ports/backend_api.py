@@ -7,12 +7,6 @@ class IBackendApiPort(ABC):
     """
 
     @abstractmethod
-    async def get_dossier_by_process(self, process_id: str) -> dict:
-        """
-        Retrieve a specific dossier from the backend API by its associated Process ID.
-        """
-
-    @abstractmethod
     async def search_dossiers(
         self, employee_name: str | None = None, process_id: str | None = None
     ) -> list[dict]:

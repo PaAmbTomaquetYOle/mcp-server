@@ -15,6 +15,7 @@ What NOT to put here:
 """
 
 from .backend_api import BackendApiAdapter
+from .backend_token_client import BackendTokenClient
 from .jira import JiraAdapter
 from .jira_auth import JiraAuthAdapter
 from .slack_api import SlackApiAdapter
@@ -27,6 +28,7 @@ from .trello_auth import TrelloAuthAdapter
 
 __all__ = [
     "BackendApiAdapter",
+    "BackendTokenClient",
     "InMemorySopCacheAdapter",
     "SqliteTokenStorage",
     "JiraAdapter",

@@ -7,7 +7,7 @@ class TestMcpServerSettings:
             _env_file=None,
         )
 
-        assert settings.name == "BrainTrust-mcp"
+        assert settings.name == "OffBoardMe-mcp"
         assert settings.host == "0.0.0.0"
         assert settings.port == 8000
         assert settings.log_level == "INFO"

@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 
 from anthropic import AsyncAnthropic
+from httpx2 import AsyncClient
 from mcp.server import FastMCP
 
 from mcp_server.application.ports import (
@@ -26,6 +27,7 @@ from mcp_server.application.services import (
 )
 from mcp_server.infrastructure.adapters import (
     BackendApiAdapter,
+    BackendTokenClient,
     InMemorySopCacheAdapter,
     JiraAdapter,
     JiraAuthAdapter,
@@ -85,6 +87,7 @@ class ServerFactory:
             )
         self._settings = settings
         self._search_connector_service: ISearchConnectorService | None = None
+        self._backend_api_adapter: IBackendApiPort | None = None
 
     @classmethod
     def get_instance(cls, settings: McpServerSettings) -> ServerFactory:
@@ -181,11 +184,21 @@ class ServerFactory:
         return trello_service
 
     def _create_backend_api_adapter(self) -> IBackendApiPort:
-        return BackendApiAdapter(
-            base_url=self._settings.backend_api_url,
-            jwt_secret=self._settings.backend_jwt_secret,
-            jwt_issuer=self._settings.backend_jwt_issuer,
-        )
+        """Return the singleton backend API adapter, sharing one HTTP client and token cache."""
+        if self._backend_api_adapter is None:
+            client = AsyncClient()
+            token_provider = BackendTokenClient(
+                base_url=self._settings.backend_api_url,
+                client_id=self._settings.backend_client_id,
+                client_secret=self._settings.backend_client_secret,
+                client=client,
+            )
+            self._backend_api_adapter = BackendApiAdapter(
+                base_url=self._settings.backend_api_url,
+                token_provider=token_provider,
+                client=client,
+            )
+        return self._backend_api_adapter
 
     def _create_slack_api_adapter(self) -> ISlackApiPort:
         return SlackApiAdapter(bot_token=self._settings.slack_bot_token)

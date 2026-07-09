@@ -17,6 +17,7 @@ What NOT to put here:
 """
 
 from .backend_api import IBackendApiPort
+from .backend_token_provider import IBackendTokenProvider
 from .collaboration_tool import ICollaborationToolPort
 from .jira_auth import IJiraAuthPort
 from .slack_api import ISlackApiPort
@@ -30,6 +31,7 @@ __all__ = [
     "AuthResult",
     "CacheStats",
     "IBackendApiPort",
+    "IBackendTokenProvider",
     "ICollaborationToolPort",
     "IJiraAuthPort",
     "ISlackApiPort",

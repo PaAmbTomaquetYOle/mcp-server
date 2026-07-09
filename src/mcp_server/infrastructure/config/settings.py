@@ -11,7 +11,7 @@ class McpServerSettings(BaseSettings):
         extra="ignore",
     )
 
-    name: str = "BrainTrust-mcp"
+    name: str = "OffBoardMe-mcp"
     host: str = "0.0.0.0"
     port: int = 8000
     log_level: str = "INFO"
@@ -26,12 +26,12 @@ class McpServerSettings(BaseSettings):
     jira_cloud_id: str = ""
     trello_api_key: str = ""
     trello_api_secret: str = ""
-    trello_app_name: str = "BrainTrust"
+    trello_app_name: str = "OffBoardMe"
     token_db_path: str = "data/tokens.db"
 
     backend_api_url: str = "http://localhost:8001/api/v1"
-    backend_jwt_secret: str = ""
-    backend_jwt_issuer: str = "mcp-server"
+    backend_client_id: str = ""
+    backend_client_secret: str = ""
 
     slack_bot_token: str = ""
     slack_signing_secret: str = ""
