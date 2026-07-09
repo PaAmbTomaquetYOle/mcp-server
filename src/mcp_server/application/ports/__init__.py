@@ -15,3 +15,31 @@ What NOT to put here:
       these abstractions, not the other way around).
     - Any framework, SDK, or IO code.
 """
+
+from .backend_api import IBackendApiPort
+from .backend_token_provider import IBackendTokenProvider
+from .collaboration_tool import ICollaborationToolPort
+from .jira_auth import IJiraAuthPort
+from .slack_api import ISlackApiPort
+from .slack_auth import ISlackAuthPort, SlackAuthResult
+from .slack_workspace_search import ISlackWorkspaceSearchPort
+from .sop_cache import CacheStats, ISopCachePort
+from .token_storage import AuthResult, ITokenStoragePort, TokenData
+from .trello_auth import ITrelloAuthPort
+
+__all__ = [
+    "AuthResult",
+    "CacheStats",
+    "IBackendApiPort",
+    "IBackendTokenProvider",
+    "ICollaborationToolPort",
+    "IJiraAuthPort",
+    "ISlackApiPort",
+    "ISlackAuthPort",
+    "ISlackWorkspaceSearchPort",
+    "ISopCachePort",
+    "ITokenStoragePort",
+    "ITrelloAuthPort",
+    "SlackAuthResult",
+    "TokenData",
+]
