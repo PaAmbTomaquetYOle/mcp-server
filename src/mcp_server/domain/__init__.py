@@ -21,7 +21,7 @@ This layer must stay pure Python so it can be reasoned about and tested in
 isolation.
 """
 
-from .enums import *
+from .enums import *  # noqa: I001 (must precede collaboration_tasks, which depends on it)
 from .collaboration_tasks import *
 from .exceptions import *
 from .search import SearchDocument, SearchQuery, SlackWorkspaceSearchResult

@@ -12,7 +12,9 @@ from mcp_server.infrastructure.controllers.tools.slack_workspace_search_controll
 from mcp_server.infrastructure.dto import SlackWorkspaceSearchResponse
 from tests.conftest import get_tool_names
 
-_RESULT = SlackWorkspaceSearchResult(content_type="messages", text="deploy failed", permalink="https://x", timestamp="1")
+_RESULT = SlackWorkspaceSearchResult(
+    content_type="messages", text="deploy failed", permalink="https://x", timestamp="1"
+)
 
 
 @pytest.fixture

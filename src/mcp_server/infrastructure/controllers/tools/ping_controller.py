@@ -3,7 +3,7 @@ from mcp_server.infrastructure.dto.tools import PingResult
 
 
 class PingToolController(BaseController):
-    """Controller for the ping tool, which serves as a health-check endpoint to verify that the MCP server is reachable and responding."""
+    """Controller for the ping tool, a health-check endpoint verifying the MCP server is reachable and responding."""
 
     def register(self) -> None:
         self._server.add_tool(

@@ -28,7 +28,9 @@ def mock_workspace_search_port():
 
 @pytest.fixture
 def service(mock_token_storage, mock_workspace_search_port):
-    return SlackWorkspaceSearchService(token_storage=mock_token_storage, workspace_search_port=mock_workspace_search_port)
+    return SlackWorkspaceSearchService(
+        token_storage=mock_token_storage, workspace_search_port=mock_workspace_search_port
+    )
 
 
 class TestSearch:

@@ -11,7 +11,12 @@ class CollaborationTask(BaseModel, ABC):
     task_id: str = Field(description="Unique identifier for the collaboration task")
     description: str | None = Field(description="Detailed description of the collaboration task")
     title: str = Field(description="Title of the collaboration task")
-    status: str = Field(description="Current status of the collaboration task", examples=["pending", "in_progress", "completed"])
+    status: str = Field(
+        description="Current status of the collaboration task",
+        examples=["pending", "in_progress", "completed"],
+    )
     project: str = Field(description="Project associated with the collaboration task")
     url: str = Field(description="URL to the collaboration task in the external tool")
-    collaboration_tool: CollaborationToolEnum = Field(description="Name of the collaboration tool", examples=["JIRA", "TRELLO"])
+    collaboration_tool: CollaborationToolEnum = Field(
+        description="Name of the collaboration tool", examples=["JIRA", "TRELLO"]
+    )
