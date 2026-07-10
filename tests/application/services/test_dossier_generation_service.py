@@ -228,3 +228,25 @@ class TestDossierGenerationService:
 
         assert result.summary is None
         assert result.sections == []
+
+    @pytest.mark.anyio
+    async def test_extracts_first_fence_when_multiple_json_blocks_present(
+        self, mock_backend_api, mock_search_connector
+    ) -> None:
+        text = (
+            "Here is an earlier draft I discarded:\n"
+            '```json\n{"summary": "draft", "sections": []}\n```\n'
+            "Here is the final dossier:\n"
+            '```json\n{"summary": "final", "sections": []}\n```'
+        )
+        service = DossierGenerationService(
+            anthropic_client=_make_client([_FakeMessage([_TextBlock(text)], "end_turn")]),
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+        )
+
+        result = await service.generate("transcript")
+
+        assert result.summary == "draft"
+        assert result.sections == []

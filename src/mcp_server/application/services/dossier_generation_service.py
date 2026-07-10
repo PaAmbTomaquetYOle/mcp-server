@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_TOOL_ITERATIONS = 4
 
-_JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*\})\s*```", re.DOTALL)
+_JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 
 _TOOLS: list[dict[str, Any]] = [
     {

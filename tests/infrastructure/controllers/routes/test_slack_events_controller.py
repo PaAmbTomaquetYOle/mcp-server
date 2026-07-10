@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import time
 from unittest.mock import AsyncMock
 
 import pytest
@@ -31,8 +32,8 @@ def _sign(body: bytes, timestamp: str) -> str:
     return f"v0={digest}"
 
 
-def _signed_headers(body: bytes) -> dict[str, str]:
-    timestamp = "1700000000"
+def _signed_headers(body: bytes, timestamp: str | None = None) -> dict[str, str]:
+    timestamp = timestamp or str(int(time.time()))
     return {
         "X-Slack-Request-Timestamp": timestamp,
         "X-Slack-Signature": _sign(body, timestamp),
@@ -79,8 +80,27 @@ class TestSignatureVerification:
     def test_rejects_invalid_signature(self, client):
         body = b'{"event": {"type": "function_executed"}}'
         headers = {
-            "X-Slack-Request-Timestamp": "1700000000",
+            "X-Slack-Request-Timestamp": str(int(time.time())),
             "X-Slack-Signature": "v0=invalid",
+        }
+        response = client.post("/slack/events", content=body, headers=headers)
+
+        assert response.status_code == 401
+
+    def test_rejects_stale_timestamp(self, client):
+        body = b'{"event": {"type": "function_executed"}}'
+        stale_timestamp = str(int(time.time()) - 301)
+        headers = _signed_headers(body, timestamp=stale_timestamp)
+
+        response = client.post("/slack/events", content=body, headers=headers)
+
+        assert response.status_code == 401
+
+    def test_rejects_non_integer_timestamp(self, client):
+        body = b'{"event": {"type": "function_executed"}}'
+        headers = {
+            "X-Slack-Request-Timestamp": "not-a-number",
+            "X-Slack-Signature": _sign(body, "not-a-number"),
         }
         response = client.post("/slack/events", content=body, headers=headers)
 
