@@ -10,6 +10,15 @@ from .dossier_schemas import (
     GetDossierResponse,
 )
 from .jira_auth_schemas import CompleteJiraAuthResponse, GenerateJiraAuthResponse
+from .knowledge_graph_schemas import (
+    AddInteractionResponse,
+    DocumentInfo,
+    ExpertResult,
+    KnowledgeMapResponse,
+    PersonInfo,
+    QueryExpertsResponse,
+    TopicInfo,
+)
 from .ping_schemas import PingResult
 from .search_connector_schemas import (
     ConnectorStatusResponse,
@@ -24,24 +33,31 @@ from .trello_auth_schemas import CompleteTrelloAuthResponse, GenerateTrelloAuthR
 
 __all__ = [
     "PingResult",
+    "AddInteractionResponse",
     "CompleteJiraAuthResponse",
     "CompleteSlackAuthResponse",
     "CompleteTrelloAuthResponse",
     "ConnectorStatusResponse",
+    "DocumentInfo",
     "DossierContact",
     "DossierKnowledgeArea",
     "DossierPendingTask",
     "DossierSearchResult",
     "DossierSection",
+    "ExpertResult",
     "GenerateDossierResponse",
     "GetDossierResponse",
     "GenerateJiraAuthResponse",
     "GenerateSlackAuthResponse",
     "GenerateTrelloAuthResponse",
+    "KnowledgeMapResponse",
+    "PersonInfo",
+    "QueryExpertsResponse",
     "RefreshResponse",
     "SearchAnalyticsResponse",
     "SearchResultItem",
     "SearchQueryTestResponse",
     "SlackWorkspaceSearchResponse",
     "SlackWorkspaceSearchResultItem",
+    "TopicInfo",
 ]

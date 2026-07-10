@@ -18,6 +18,8 @@ from .backend_api import BackendApiAdapter
 from .backend_token_client import BackendTokenClient
 from .jira import JiraAdapter
 from .jira_auth import JiraAuthAdapter
+from .kafka_event_publisher import KafkaEventPublisherAdapter
+from .knowledge_graph_api import KnowledgeGraphApiAdapter
 from .slack_api import SlackApiAdapter
 from .slack_auth import SlackAuthAdapter
 from .slack_workspace_search import SlackWorkspaceSearchAdapter
@@ -30,6 +32,8 @@ __all__ = [
     "BackendApiAdapter",
     "BackendTokenClient",
     "InMemorySopCacheAdapter",
+    "KafkaEventPublisherAdapter",
+    "KnowledgeGraphApiAdapter",
     "SqliteTokenStorage",
     "JiraAdapter",
     "JiraAuthAdapter",

@@ -17,6 +17,7 @@ from .extract_trello_tasks_controller import ExtractTrelloTasksToolController
 from .generate_dossier_controller import GenerateDossierToolController
 from .get_dossier_controller import GetDossierToolController
 from .jira_auth_controller import JiraAuthToolController
+from .knowledge_graph_controller import KnowledgeGraphToolController
 from .ping_controller import PingToolController
 from .search_connector_controller import SearchConnectorToolController
 from .slack_auth_controller import SlackAuthToolController
@@ -30,6 +31,7 @@ __all__ = [
     "GenerateDossierToolController",
     "GetDossierToolController",
     "JiraAuthToolController",
+    "KnowledgeGraphToolController",
     "SearchConnectorToolController",
     "SlackAuthToolController",
     "SlackWorkspaceSearchToolController",
