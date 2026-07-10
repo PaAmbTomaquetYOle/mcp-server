@@ -1,7 +1,16 @@
 from typing import Self
 
-from pydantic import model_validator
+from cryptography.fernet import Fernet
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_TOKEN_ENCRYPTION_KEY_HELP = (
+    "MCP_SERVER_TOKEN_ENCRYPTION_KEY is missing or invalid.\n"
+    "This key is required to encrypt OAuth tokens at rest.\n"
+    "Generate one with:\n"
+    '  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"\n'
+    "Then set MCP_SERVER_TOKEN_ENCRYPTION_KEY=<generated-key> in your .env file."
+)
 
 
 class McpServerSettings(BaseSettings):
@@ -28,6 +37,7 @@ class McpServerSettings(BaseSettings):
     trello_api_secret: str = ""
     trello_app_name: str = "OffBoardMe"
     token_db_path: str = "data/tokens.db"
+    token_encryption_key: str
 
     backend_api_url: str = "http://localhost:8001/api/v1"
     backend_client_id: str = ""
@@ -48,6 +58,15 @@ class McpServerSettings(BaseSettings):
     anthropic_model: str = "claude-sonnet-4-5-20250929"
     dossier_generation_max_tool_iterations: int = 4
     dossier_generation_max_tokens: int = 4096
+
+    @field_validator("token_encryption_key")
+    @classmethod
+    def _validate_token_encryption_key(cls, value: str) -> str:
+        try:
+            Fernet(value.encode())
+        except Exception as exc:
+            raise ValueError(_TOKEN_ENCRYPTION_KEY_HELP) from exc
+        return value
 
     @model_validator(mode="after")
     def _derive_urls(self) -> Self:
