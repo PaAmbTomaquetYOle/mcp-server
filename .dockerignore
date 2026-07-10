@@ -1,0 +1,68 @@
+# Git
+.git/
+.gitignore
+.github/
+
+# Python bytecode / build artifacts
+__pycache__/
+*.py[codz]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets / environment files (this repo holds Jira/Trello/Slack/Anthropic API keys)
+.env
+.env.*
+!.env.example
+
+# Test / lint / type-check caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.hypothesis/
+
+# Coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Editors / IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+tmp/
+temp/
+
+# Tests and docs not needed inside the image
+tests/
+documentation/
+README.md
+LICENSE
+
+# Local token/data storage (see .gitignore's "Token storage" section)
+data/
+
+# Claude Code / editor tooling config
+.claude/
+
+# Codebase memory index
+.codebase-memory/
