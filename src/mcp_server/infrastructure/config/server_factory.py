@@ -54,6 +54,11 @@ from mcp_server.infrastructure.controllers.prompts import (
     SlackLoginPromptController,
     TrelloLoginPromptController,
 )
+from mcp_server.infrastructure.controllers.resources import (
+    DossierResourceController,
+    KnowledgeGraphResourceController,
+    SopResourceController,
+)
 from mcp_server.infrastructure.controllers.routes import (
     OAuthCallbackController,
     SlackEventsRouteController,
@@ -100,6 +105,7 @@ class ServerFactory:
         self._backend_token_provider: IBackendTokenProvider | None = None
         self._knowledge_graph_adapter: IKnowledgeGraphPort | None = None
         self._event_publisher_adapter: IEventPublisherPort | None = None
+        self._token_storage: ITokenStoragePort | None = None
 
     @classmethod
     def get_instance(cls, settings: McpServerSettings) -> ServerFactory:
@@ -143,11 +149,15 @@ class ServerFactory:
         )
         self._register_tools(server)
         self._register_prompts(server)
+        self._register_resources(server)
         self._register_routes(server)
         return server
     
     def _create_token_storage(self) -> ITokenStoragePort:
-        return SqliteTokenStorage(db_path=self._settings.token_db_path)
+        """Return the singleton token storage, shared by all adapters/services that need it."""
+        if self._token_storage is None:
+            self._token_storage = SqliteTokenStorage(db_path=self._settings.token_db_path)
+        return self._token_storage
 
     def _create_jira_adapter(self) -> JiraAdapter:
         return JiraAdapter(
@@ -276,6 +286,7 @@ class ServerFactory:
             backend_api=self._create_backend_api_adapter(),
             search_connector=self.get_search_connector_service(),
             max_tool_iterations=self._settings.dossier_generation_max_tool_iterations,
+            max_tokens=self._settings.dossier_generation_max_tokens,
         )
 
     def get_search_connector_service(self) -> ISearchConnectorService:
@@ -328,6 +339,16 @@ class ServerFactory:
         TrelloLoginPromptController(server).register()
         SearchConnectorPromptController(server).register()
         SlackLoginPromptController(server).register()
+
+    def _register_resources(self, server: FastMCP) -> None:
+        search_connector_service = self.get_search_connector_service()
+        SopResourceController(server, search_connector_service).register()
+
+        backend_api_adapter = self._create_backend_api_adapter()
+        DossierResourceController(server, backend_api_adapter).register()
+
+        knowledge_graph_adapter = self._create_knowledge_graph_adapter()
+        KnowledgeGraphResourceController(server, knowledge_graph_adapter).register()
 
     def _register_routes(self, server: FastMCP) -> None:
         jira_auth_service = self._create_jira_auth_service()

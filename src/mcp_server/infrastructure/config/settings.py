@@ -47,6 +47,7 @@ class McpServerSettings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-5-20250929"
     dossier_generation_max_tool_iterations: int = 4
+    dossier_generation_max_tokens: int = 4096
 
     @model_validator(mode="after")
     def _derive_urls(self) -> Self:

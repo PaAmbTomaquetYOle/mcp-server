@@ -24,8 +24,14 @@ class SearchDocument(BaseModel):
     @classmethod
     def from_sop(cls, sop: dict[str, Any], base_url: str) -> SearchDocument:
         content: str = sop["content"]
-        first_line = content.splitlines()[0] if content else ""
-        title = first_line[:_TITLE_MAX_LENGTH]
+        # The backend's /sops response doesn't expose a `title` field today,
+        # but if/when it does, prefer it over the derived first-line title.
+        explicit_title = sop.get("title")
+        if explicit_title:
+            title = explicit_title[:_TITLE_MAX_LENGTH]
+        else:
+            first_line = content.splitlines()[0] if content else ""
+            title = first_line[:_TITLE_MAX_LENGTH]
 
         return cls(
             external_id=sop["id"],

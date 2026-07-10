@@ -52,6 +52,16 @@ class TestMcpServerSettings:
 
         assert settings.jira_redirect_uri == "https://mcp.example.com/callback"
 
+    def test_dossier_generation_max_tokens_default(self):
+        settings = McpServerSettings(_env_file=None)
+
+        assert settings.dossier_generation_max_tokens == 4096
+
+    def test_dossier_generation_max_tokens_override(self):
+        settings = McpServerSettings(dossier_generation_max_tokens=8192, _env_file=None)
+
+        assert settings.dossier_generation_max_tokens == 8192
+
     def test_explicit_redirect_uri_not_overridden(self):
         settings = McpServerSettings(
             base_url="https://mcp.example.com",
