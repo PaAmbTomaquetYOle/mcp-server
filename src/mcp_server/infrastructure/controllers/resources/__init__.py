@@ -11,3 +11,13 @@ What NOT to put here:
     - Business logic or data-access details: fetch through an application
       service / port, not directly. Keep these handlers thin.
 """
+
+from .dossier_resource_controller import DossierResourceController
+from .knowledge_graph_resource_controller import KnowledgeGraphResourceController
+from .sop_resource_controller import SopResourceController
+
+__all__ = [
+    "DossierResourceController",
+    "KnowledgeGraphResourceController",
+    "SopResourceController",
+]

@@ -186,6 +186,37 @@ class TestDossierGenerationService:
             await service.generate("transcript")
 
     @pytest.mark.anyio
+    async def test_uses_configured_max_tokens(self, mock_backend_api, mock_search_connector) -> None:
+        final_json = json.dumps({"summary": "ok", "sections": []})
+        client = _make_client([_FakeMessage([_TextBlock(final_json)], "end_turn")])
+        service = DossierGenerationService(
+            anthropic_client=client,
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+            max_tokens=1234,
+        )
+
+        await service.generate("transcript")
+
+        assert client.messages.create.call_args.kwargs["max_tokens"] == 1234
+
+    @pytest.mark.anyio
+    async def test_defaults_max_tokens_to_4096(self, mock_backend_api, mock_search_connector) -> None:
+        final_json = json.dumps({"summary": "ok", "sections": []})
+        client = _make_client([_FakeMessage([_TextBlock(final_json)], "end_turn")])
+        service = DossierGenerationService(
+            anthropic_client=client,
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+        )
+
+        await service.generate("transcript")
+
+        assert client.messages.create.call_args.kwargs["max_tokens"] == 4096
+
+    @pytest.mark.anyio
     async def test_raises_on_malformed_json(self, mock_backend_api, mock_search_connector) -> None:
         service = DossierGenerationService(
             anthropic_client=_make_client([_FakeMessage([_TextBlock("not json")], "end_turn")]),
@@ -227,4 +258,26 @@ class TestDossierGenerationService:
         result = await service.generate("transcript")
 
         assert result.summary is None
+        assert result.sections == []
+
+    @pytest.mark.anyio
+    async def test_extracts_first_fence_when_multiple_json_blocks_present(
+        self, mock_backend_api, mock_search_connector
+    ) -> None:
+        text = (
+            "Here is an earlier draft I discarded:\n"
+            '```json\n{"summary": "draft", "sections": []}\n```\n'
+            "Here is the final dossier:\n"
+            '```json\n{"summary": "final", "sections": []}\n```'
+        )
+        service = DossierGenerationService(
+            anthropic_client=_make_client([_FakeMessage([_TextBlock(text)], "end_turn")]),
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+        )
+
+        result = await service.generate("transcript")
+
+        assert result.summary == "draft"
         assert result.sections == []

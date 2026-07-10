@@ -1,6 +1,7 @@
 import os
 import tempfile
 
+import aiosqlite
 import pytest
 
 from mcp_server.infrastructure.adapters.sqlite_token_storage import SqliteTokenStorage
@@ -75,6 +76,16 @@ class TestSqliteTokenStorage:
         )
         
         await storage.delete_tokens("user2@example.com")
-        
+
         tokens = await storage.get_tokens("user2@example.com")
         assert tokens is None
+
+    @pytest.mark.anyio
+    async def test_ensure_db_enables_wal_mode(self, storage, temp_db_path):
+        await storage._ensure_db()
+
+        async with aiosqlite.connect(temp_db_path) as db:
+            cursor = await db.execute("PRAGMA journal_mode")
+            row = await cursor.fetchone()
+
+        assert row[0].lower() == "wal"

@@ -19,8 +19,9 @@ What NOT to put here:
 """
 
 from .base_controller import BaseController
-from .error_handler import tool_error_handler
+from .error_handler import resource_error_handler, tool_error_handler
 from .prompts import *
+from .resources import *
 from .routes import *
 from .tools import *
 
@@ -32,5 +33,9 @@ __all__ = [
     "ExtractTrelloTasksToolController",
     "ExtractTasksPromptController",
     "JiraLoginPromptController",
+    "DossierResourceController",
+    "KnowledgeGraphResourceController",
+    "SopResourceController",
+    "resource_error_handler",
     "tool_error_handler",
 ]

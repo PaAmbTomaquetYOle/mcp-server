@@ -13,6 +13,18 @@ from mcp_server.domain.exceptions import (
     UserTokensNotFoundException,
 )
 
+_UNKNOWN_STATUS = 500
+
+
+def _status_of(exc: ResourceUnavailable) -> int:
+    """Best-effort HTTP status extraction from py-trello's ResourceUnavailable.
+
+    py-trello only exposes the status via the private ``_status`` attribute
+    (no public equivalent as of the currently installed version), so fall
+    back to a generic server-error status if it's ever removed or renamed.
+    """
+    return getattr(exc, "_status", _UNKNOWN_STATUS)
+
 
 class TrelloAdapter(ICollaborationToolPort):
     __token_storage: ITokenStoragePort
@@ -140,9 +152,10 @@ class TrelloAdapter(ICollaborationToolPort):
         except Unauthorized as exc:
             raise TrelloAuthenticationException(user_id) from exc
         except ResourceUnavailable as exc:
-            if exc._status == 404:
+            status = _status_of(exc)
+            if status == 404:
                 raise TrelloCardNotFoundException(issue_id) from exc
-            raise TrelloApiException(str(exc), status_code=exc._status) from exc
+            raise TrelloApiException(str(exc), status_code=status) from exc
         return await self.__card_to_domain_model(card, client)
 
     async def get_pending_issues(self, user_id: str, assignee: str) -> tuple[TrelloTask, ...]:
@@ -152,9 +165,10 @@ class TrelloAdapter(ICollaborationToolPort):
         except Unauthorized as exc:
             raise TrelloAuthenticationException(user_id) from exc
         except ResourceUnavailable as exc:
-            if exc._status == 404:
+            status = _status_of(exc)
+            if status == 404:
                 raise TrelloMemberNotFoundException(assignee) from exc
-            raise TrelloApiException(str(exc), status_code=exc._status) from exc
+            raise TrelloApiException(str(exc), status_code=status) from exc
         try:
             boards = await asyncio.to_thread(member.get_boards, "open")
             board_cards = await asyncio.gather(
@@ -163,7 +177,7 @@ class TrelloAdapter(ICollaborationToolPort):
         except Unauthorized as exc:
             raise TrelloAuthenticationException(user_id) from exc
         except ResourceUnavailable as exc:
-            raise TrelloApiException(str(exc), status_code=exc._status) from exc
+            raise TrelloApiException(str(exc), status_code=_status_of(exc)) from exc
         cards = [
             card
             for cards in board_cards
