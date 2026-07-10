@@ -106,6 +106,35 @@ class BackendApiException(CollaborationToolException):
         self.status_code = status_code
 
 
+class KnowledgeGraphException(CollaborationToolException):
+    """Base exception for all Knowledge Graph errors."""
+
+
+class PersonNotFoundException(KnowledgeGraphException):
+    """The requested person was not found in the knowledge graph."""
+
+    def __init__(self, person_id: str) -> None:
+        super().__init__(f"Person not found: {person_id}")
+        self.person_id = person_id
+        self.status_code = 404
+
+
+class KnowledgeGraphApiException(KnowledgeGraphException):
+    """The Knowledge Graph REST API returned an error or is unreachable."""
+
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class EventPublishException(KnowledgeGraphException):
+    """Failed to publish an event to the message broker."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(f"Event publish failed: {reason}")
+        self.reason = reason
+
+
 class AuthCodeExchangeException(CollaborationToolException):
     """Failed to exchange an OAuth authorization code for tokens."""
 
