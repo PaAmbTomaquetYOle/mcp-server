@@ -8,18 +8,23 @@ from mcp.server import FastMCP
 
 from mcp_server.application.ports import (
     IBackendApiPort,
+    IBackendTokenProvider,
+    IEventPublisherPort,
+    IKnowledgeGraphPort,
     ISlackApiPort,
     ISopCachePort,
     ITokenStoragePort,
 )
 from mcp_server.application.service_interfaces import (
     IDossierGenerationService,
+    IKnowledgeGraphService,
     ISearchConnectorService,
 )
 from mcp_server.application.services import (
     CollaborationToolIntegrationService,
     DossierGenerationService,
     JiraAuthService,
+    KnowledgeGraphService,
     SearchConnectorService,
     SlackAuthService,
     SlackWorkspaceSearchService,
@@ -31,6 +36,8 @@ from mcp_server.infrastructure.adapters import (
     InMemorySopCacheAdapter,
     JiraAdapter,
     JiraAuthAdapter,
+    KafkaEventPublisherAdapter,
+    KnowledgeGraphApiAdapter,
     SlackApiAdapter,
     SlackAuthAdapter,
     SlackWorkspaceSearchAdapter,
@@ -58,6 +65,7 @@ from mcp_server.infrastructure.controllers.tools import (
     GenerateDossierToolController,
     GetDossierToolController,
     JiraAuthToolController,
+    KnowledgeGraphToolController,
     PingToolController,
     SearchConnectorToolController,
     SlackAuthToolController,
@@ -88,6 +96,10 @@ class ServerFactory:
         self._settings = settings
         self._search_connector_service: ISearchConnectorService | None = None
         self._backend_api_adapter: IBackendApiPort | None = None
+        self._backend_http_client: AsyncClient | None = None
+        self._backend_token_provider: IBackendTokenProvider | None = None
+        self._knowledge_graph_adapter: IKnowledgeGraphPort | None = None
+        self._event_publisher_adapter: IEventPublisherPort | None = None
 
     @classmethod
     def get_instance(cls, settings: McpServerSettings) -> ServerFactory:
@@ -183,22 +195,56 @@ class ServerFactory:
         trello_service = CollaborationToolIntegrationService(trello_adapter)
         return trello_service
 
-    def _create_backend_api_adapter(self) -> IBackendApiPort:
-        """Return the singleton backend API adapter, sharing one HTTP client and token cache."""
-        if self._backend_api_adapter is None:
-            client = AsyncClient()
-            token_provider = BackendTokenClient(
+    def _get_backend_http_client(self) -> AsyncClient:
+        """Return the singleton HTTP client shared by all backend API adapters."""
+        if self._backend_http_client is None:
+            self._backend_http_client = AsyncClient()
+        return self._backend_http_client
+
+    def _get_backend_token_provider(self) -> IBackendTokenProvider:
+        """Return the singleton token provider shared by all backend API adapters."""
+        if self._backend_token_provider is None:
+            self._backend_token_provider = BackendTokenClient(
                 base_url=self._settings.backend_api_url,
                 client_id=self._settings.backend_client_id,
                 client_secret=self._settings.backend_client_secret,
-                client=client,
+                client=self._get_backend_http_client(),
             )
+        return self._backend_token_provider
+
+    def _create_backend_api_adapter(self) -> IBackendApiPort:
+        """Return the singleton backend API adapter, sharing one HTTP client and token cache."""
+        if self._backend_api_adapter is None:
             self._backend_api_adapter = BackendApiAdapter(
                 base_url=self._settings.backend_api_url,
-                token_provider=token_provider,
-                client=client,
+                token_provider=self._get_backend_token_provider(),
+                client=self._get_backend_http_client(),
             )
         return self._backend_api_adapter
+
+    def _create_knowledge_graph_adapter(self) -> IKnowledgeGraphPort:
+        """Return the singleton Knowledge Graph adapter, sharing the backend HTTP client and token cache."""
+        if self._knowledge_graph_adapter is None:
+            self._knowledge_graph_adapter = KnowledgeGraphApiAdapter(
+                base_url=self._settings.backend_api_url,
+                token_provider=self._get_backend_token_provider(),
+                client=self._get_backend_http_client(),
+            )
+        return self._knowledge_graph_adapter
+
+    def _create_event_publisher_adapter(self) -> IEventPublisherPort:
+        """Return the singleton Kafka event publisher, connecting lazily on first publish."""
+        if self._event_publisher_adapter is None:
+            self._event_publisher_adapter = KafkaEventPublisherAdapter(
+                bootstrap_servers=self._settings.kafka_bootstrap_servers,
+            )
+        return self._event_publisher_adapter
+
+    def _create_knowledge_graph_service(self) -> IKnowledgeGraphService:
+        return KnowledgeGraphService(
+            kg_port=self._create_knowledge_graph_adapter(),
+            event_publisher=self._create_event_publisher_adapter(),
+        )
 
     def _create_slack_api_adapter(self) -> ISlackApiPort:
         return SlackApiAdapter(bot_token=self._settings.slack_bot_token)
@@ -271,6 +317,9 @@ class ServerFactory:
 
         slack_workspace_search_service = self._create_slack_workspace_search_service()
         SlackWorkspaceSearchToolController(server, slack_workspace_search_service).register()
+
+        knowledge_graph_service = self._create_knowledge_graph_service()
+        KnowledgeGraphToolController(server, knowledge_graph_service).register()
 
     def _register_prompts(self, server: FastMCP) -> None:
         ExtractJiraTasksPromptController(server).register()
