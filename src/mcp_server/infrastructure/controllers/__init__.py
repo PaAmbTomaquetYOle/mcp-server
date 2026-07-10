@@ -17,3 +17,20 @@ What NOT to put here:
     - Business logic or orchestration: controllers stay thin and delegate to
       application services. Domain decisions never live in the transport layer.
 """
+
+from .base_controller import BaseController
+from .error_handler import tool_error_handler
+from .prompts import *
+from .routes import *
+from .tools import *
+
+__all__ = [
+    "BaseController",
+    "OAuthCallbackController",
+    "PingToolController",
+    "ExtractJiraTasksToolController",
+    "ExtractTrelloTasksToolController",
+    "ExtractTasksPromptController",
+    "JiraLoginPromptController",
+    "tool_error_handler",
+]

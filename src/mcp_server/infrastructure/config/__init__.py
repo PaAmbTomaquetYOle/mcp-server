@@ -14,3 +14,8 @@ What NOT to put here:
     - Secrets or credentials in source: load them from the environment / a
       secrets manager.
 """
+
+from mcp_server.infrastructure.config.server_factory import ServerFactory
+from mcp_server.infrastructure.config.settings import McpServerSettings
+
+__all__ = ["McpServerSettings", "ServerFactory"]
