@@ -19,7 +19,9 @@ What NOT to put here:
 from .backend_api import IBackendApiPort
 from .backend_token_provider import IBackendTokenProvider
 from .collaboration_tool import ICollaborationToolPort
+from .event_publisher import IEventPublisherPort
 from .jira_auth import IJiraAuthPort
+from .knowledge_graph import IKnowledgeGraphPort
 from .slack_api import ISlackApiPort
 from .slack_auth import ISlackAuthPort, SlackAuthResult
 from .slack_workspace_search import ISlackWorkspaceSearchPort
@@ -33,7 +35,9 @@ __all__ = [
     "IBackendApiPort",
     "IBackendTokenProvider",
     "ICollaborationToolPort",
+    "IEventPublisherPort",
     "IJiraAuthPort",
+    "IKnowledgeGraphPort",
     "ISlackApiPort",
     "ISlackAuthPort",
     "ISlackWorkspaceSearchPort",
