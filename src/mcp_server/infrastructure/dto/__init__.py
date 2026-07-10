@@ -22,10 +22,12 @@ What NOT to put here:
 from .tools import *
 
 __all__ = [
+    "AddInteractionResponse",
     "CompleteJiraAuthResponse",
     "CompleteSlackAuthResponse",
     "CompleteTrelloAuthResponse",
     "ConnectorStatusResponse",
+    "DocumentInfo",
     "GenerateJiraAuthResponse",
     "GenerateSlackAuthResponse",
     "GenerateTrelloAuthResponse",
@@ -35,12 +37,17 @@ __all__ = [
     "DossierPendingTask",
     "DossierSearchResult",
     "DossierSection",
+    "ExpertResult",
     "GenerateDossierResponse",
     "GetDossierResponse",
+    "KnowledgeMapResponse",
+    "PersonInfo",
+    "QueryExpertsResponse",
     "RefreshResponse",
     "SearchAnalyticsResponse",
     "SearchResultItem",
     "SearchQueryTestResponse",
     "SlackWorkspaceSearchResponse",
     "SlackWorkspaceSearchResultItem",
+    "TopicInfo",
 ]

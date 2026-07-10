@@ -5,6 +5,7 @@ description = "MCP server to give functionalities to the agent"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "aiokafka==0.14.0",
     "aiosqlite==0.22.1",
     "anthropic==0.116.0",
     "anyio==4.14.1",

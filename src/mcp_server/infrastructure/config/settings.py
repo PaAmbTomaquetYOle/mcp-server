@@ -33,6 +33,8 @@ class McpServerSettings(BaseSettings):
     backend_client_id: str = ""
     backend_client_secret: str = ""
 
+    kafka_bootstrap_servers: str = "localhost:9092"
+
     slack_bot_token: str = ""
     slack_signing_secret: str = ""
     slack_client_id: str = ""

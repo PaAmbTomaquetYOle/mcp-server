@@ -8,10 +8,13 @@ from mcp_server.domain.exceptions import (
     AuthCodeExchangeException,
     BackendApiException,
     CollaborationToolException,
+    EventPublishException,
     IssueNotFoundException,
     JiraApiException,
     JiraAuthenticationException,
     JiraUserNotFoundException,
+    KnowledgeGraphApiException,
+    PersonNotFoundException,
     SlackApiException,
     SopCacheException,
     TokenRefreshException,
@@ -41,6 +44,9 @@ ERROR_MESSAGES: dict[type[CollaborationToolException], str] = {
     BackendApiException: "Failed to reach the backend API or it returned an error.",
     SlackApiException: "Failed to reach the Slack API or it returned an error.",
     SopCacheException: "Failed to refresh the SOP search cache.",
+    PersonNotFoundException: "The requested person was not found in the knowledge graph.",
+    KnowledgeGraphApiException: "Knowledge Graph API error occurred.",
+    EventPublishException: "Failed to publish the interaction event.",
 }
 
 
