@@ -1,8 +1,8 @@
-class CollaborationToolException(Exception):
-    """Base exception for all collaboration tool errors."""
+class DomainException(Exception):
+    """Base exception for all MCP server domain errors."""
 
 
-class UserTokensNotFoundException(CollaborationToolException):
+class UserTokensNotFoundException(DomainException):
     """No OAuth tokens found for the given user."""
 
     def __init__(self, user_id: str) -> None:
@@ -10,7 +10,7 @@ class UserTokensNotFoundException(CollaborationToolException):
         self.user_id = user_id
 
 
-class TokenRefreshException(CollaborationToolException):
+class TokenRefreshException(DomainException):
     """Failed to refresh the OAuth access token."""
 
     def __init__(self, user_id: str, reason: str) -> None:
@@ -19,7 +19,7 @@ class TokenRefreshException(CollaborationToolException):
         self.reason = reason
 
 
-class JiraApiException(CollaborationToolException):
+class JiraApiException(DomainException):
     """Jira REST API returned an error."""
 
     def __init__(self, message: str, status_code: int | None = None) -> None:
@@ -43,7 +43,7 @@ class JiraUserNotFoundException(JiraApiException):
         self.assignee = assignee
 
 
-class JiraAuthenticationException(CollaborationToolException):
+class JiraAuthenticationException(DomainException):
     """Authentication with Jira failed (invalid or revoked credentials)."""
 
     def __init__(self, user_id: str) -> None:
@@ -54,7 +54,7 @@ class JiraAuthenticationException(CollaborationToolException):
         self.user_id = user_id
 
 
-class TrelloApiException(CollaborationToolException):
+class TrelloApiException(DomainException):
     """Trello REST API returned an error."""
 
     def __init__(self, message: str, status_code: int | None = None) -> None:
@@ -78,7 +78,7 @@ class TrelloMemberNotFoundException(TrelloApiException):
         self.member = member
 
 
-class TrelloAuthenticationException(CollaborationToolException):
+class TrelloAuthenticationException(DomainException):
     """Authentication with Trello failed (invalid or revoked credentials)."""
 
     def __init__(self, user_id: str) -> None:
@@ -89,7 +89,7 @@ class TrelloAuthenticationException(CollaborationToolException):
         self.user_id = user_id
 
 
-class TrelloTokenStorageException(CollaborationToolException):
+class TrelloTokenStorageException(DomainException):
     """Failed to store Trello OAuth tokens (e.g. empty token or token_secret)."""
 
     def __init__(self, user_id: str, reason: str) -> None:
@@ -98,7 +98,7 @@ class TrelloTokenStorageException(CollaborationToolException):
         self.reason = reason
 
 
-class BackendApiException(CollaborationToolException):
+class BackendApiException(DomainException):
     """The backend API returned an error or is unreachable."""
 
     def __init__(self, message: str, status_code: int | None = None) -> None:
@@ -106,7 +106,7 @@ class BackendApiException(CollaborationToolException):
         self.status_code = status_code
 
 
-class KnowledgeGraphException(CollaborationToolException):
+class KnowledgeGraphException(DomainException):
     """Base exception for all Knowledge Graph errors."""
 
 
@@ -135,7 +135,7 @@ class EventPublishException(KnowledgeGraphException):
         self.reason = reason
 
 
-class AuthCodeExchangeException(CollaborationToolException):
+class AuthCodeExchangeException(DomainException):
     """Failed to exchange an OAuth authorization code for tokens."""
 
     def __init__(self, user_id: str, reason: str) -> None:
@@ -146,7 +146,7 @@ class AuthCodeExchangeException(CollaborationToolException):
         self.reason = reason
 
 
-class SlackSearchException(CollaborationToolException):
+class SlackSearchException(DomainException):
     """Base exception for the Slack search connector."""
 
 
