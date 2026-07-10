@@ -1,10 +1,14 @@
 import os
+import stat
+import sys
 import tempfile
 
 import aiosqlite
 import pytest
+from cryptography.fernet import Fernet
 
 from mcp_server.infrastructure.adapters.sqlite_token_storage import SqliteTokenStorage
+from mcp_server.infrastructure.adapters.token_encryptor import TokenEncryptor
 
 
 @pytest.fixture
@@ -18,6 +22,16 @@ def temp_db_path():
 @pytest.fixture
 def storage(temp_db_path):
     return SqliteTokenStorage(db_path=temp_db_path)
+
+
+@pytest.fixture
+def encryptor():
+    return TokenEncryptor(Fernet.generate_key().decode())
+
+
+@pytest.fixture
+def encrypted_storage(temp_db_path, encryptor):
+    return SqliteTokenStorage(db_path=temp_db_path, encryptor=encryptor)
 
 
 @pytest.mark.integration
@@ -89,3 +103,48 @@ class TestSqliteTokenStorage:
             row = await cursor.fetchone()
 
         assert row[0].lower() == "wal"
+
+    @pytest.mark.anyio
+    async def test_save_and_get_tokens_with_encryption(self, encrypted_storage):
+        await encrypted_storage.save_tokens(
+            user_id="user1@example.com",
+            access_token="acc123",
+            refresh_token="ref123",
+            expires_at=1234567890,
+        )
+
+        tokens = await encrypted_storage.get_tokens("user1@example.com")
+
+        assert tokens is not None
+        assert tokens["access_token"] == "acc123"
+        assert tokens["refresh_token"] == "ref123"
+        assert tokens["expires_at"] == 1234567890
+
+    @pytest.mark.anyio
+    async def test_tokens_stored_encrypted_in_db(self, encrypted_storage, temp_db_path):
+        await encrypted_storage.save_tokens(
+            user_id="user1@example.com",
+            access_token="acc123",
+            refresh_token="ref123",
+            expires_at=1234567890,
+        )
+
+        async with aiosqlite.connect(temp_db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT access_token, refresh_token FROM user_tokens WHERE user_id = ?",
+                ("user1@example.com",),
+            )
+            row = await cursor.fetchone()
+
+        assert row["access_token"] != "acc123"
+        assert row["refresh_token"] != "ref123"
+
+    @pytest.mark.anyio
+    @pytest.mark.skipif(sys.platform == "win32", reason="POSIX file permissions are not enforced on Windows")
+    async def test_db_file_has_owner_only_permissions(self, storage, temp_db_path):
+        await storage._ensure_db()
+
+        mode = stat.S_IMODE(os.stat(temp_db_path).st_mode)
+
+        assert mode == 0o600
