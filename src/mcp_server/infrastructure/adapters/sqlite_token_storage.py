@@ -1,15 +1,21 @@
+import os
+import sys
 from pathlib import Path
 
 import aiosqlite
 
 from mcp_server.application.ports.token_storage import ITokenStoragePort, TokenData
+from mcp_server.infrastructure.adapters.token_encryptor import TokenEncryptor
+
+_OWNER_READ_WRITE_ONLY = 0o600
 
 
 class SqliteTokenStorage(ITokenStoragePort):
     """SQLite-backed token storage, one row per user."""
 
-    def __init__(self, db_path: str) -> None:
+    def __init__(self, db_path: str, encryptor: TokenEncryptor | None = None) -> None:
         self._db_path = db_path
+        self._encryptor = encryptor
         self._initialized = False
 
     async def _ensure_db(self) -> None:
@@ -29,6 +35,8 @@ class SqliteTokenStorage(ITokenStoragePort):
                 """
             )
             await db.commit()
+        if sys.platform != "win32":
+            os.chmod(self._db_path, _OWNER_READ_WRITE_ONLY)
         self._initialized = True
 
     async def get_tokens(self, user_id: str) -> TokenData | None:
@@ -42,9 +50,14 @@ class SqliteTokenStorage(ITokenStoragePort):
             row = await cursor.fetchone()
             if row is None:
                 return None
+            access_token = row["access_token"]
+            refresh_token = row["refresh_token"]
+            if self._encryptor is not None:
+                access_token = self._encryptor.decrypt(access_token)
+                refresh_token = self._encryptor.decrypt(refresh_token)
             return TokenData(
-                access_token=row["access_token"],
-                refresh_token=row["refresh_token"],
+                access_token=access_token,
+                refresh_token=refresh_token,
                 expires_at=row["expires_at"],
             )
 
@@ -56,6 +69,11 @@ class SqliteTokenStorage(ITokenStoragePort):
         expires_at: int,
     ) -> None:
         await self._ensure_db()
+        stored_access_token = access_token
+        stored_refresh_token = refresh_token
+        if self._encryptor is not None:
+            stored_access_token = self._encryptor.encrypt(access_token)
+            stored_refresh_token = self._encryptor.encrypt(refresh_token)
         async with aiosqlite.connect(self._db_path) as db:
             await db.execute(
                 """
@@ -66,7 +84,7 @@ class SqliteTokenStorage(ITokenStoragePort):
                     refresh_token = excluded.refresh_token,
                     expires_at = excluded.expires_at
                 """,
-                (user_id, access_token, refresh_token, expires_at),
+                (user_id, stored_access_token, stored_refresh_token, expires_at),
             )
             await db.commit()
 

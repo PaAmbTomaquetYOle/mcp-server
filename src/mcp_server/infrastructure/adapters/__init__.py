@@ -25,6 +25,7 @@ from .slack_auth import SlackAuthAdapter
 from .slack_workspace_search import SlackWorkspaceSearchAdapter
 from .sop_cache import InMemorySopCacheAdapter
 from .sqlite_token_storage import SqliteTokenStorage
+from .token_encryptor import TokenEncryptor
 from .trello import TrelloAdapter
 from .trello_auth import TrelloAuthAdapter
 
@@ -35,6 +36,7 @@ __all__ = [
     "KafkaEventPublisherAdapter",
     "KnowledgeGraphApiAdapter",
     "SqliteTokenStorage",
+    "TokenEncryptor",
     "JiraAdapter",
     "JiraAuthAdapter",
     "SlackApiAdapter",

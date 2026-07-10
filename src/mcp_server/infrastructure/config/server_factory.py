@@ -42,6 +42,7 @@ from mcp_server.infrastructure.adapters import (
     SlackAuthAdapter,
     SlackWorkspaceSearchAdapter,
     SqliteTokenStorage,
+    TokenEncryptor,
     TrelloAdapter,
     TrelloAuthAdapter,
 )
@@ -156,7 +157,11 @@ class ServerFactory:
     def _create_token_storage(self) -> ITokenStoragePort:
         """Return the singleton token storage, shared by all adapters/services that need it."""
         if self._token_storage is None:
-            self._token_storage = SqliteTokenStorage(db_path=self._settings.token_db_path)
+            encryptor = TokenEncryptor(self._settings.token_encryption_key)
+            self._token_storage = SqliteTokenStorage(
+                db_path=self._settings.token_db_path,
+                encryptor=encryptor,
+            )
         return self._token_storage
 
     def _create_jira_adapter(self) -> JiraAdapter:
