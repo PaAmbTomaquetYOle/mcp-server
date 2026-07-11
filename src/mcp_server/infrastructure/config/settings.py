@@ -33,9 +33,13 @@ class McpServerSettings(BaseSettings):
     jira_client_secret: str = ""
     jira_redirect_uri: str = ""
     jira_cloud_id: str = ""
+    jira_auth_base_url: str = "https://auth.atlassian.com/authorize"
     trello_api_key: str = ""
     trello_api_secret: str = ""
     trello_app_name: str = "OffBoardMe"
+    trello_client_id: str = ""
+    trello_redirect_uri: str = ""
+    trello_auth_base_url: str = "https://trello.com/1/authorize"
     token_db_path: str = "data/tokens.db"
     token_encryption_key: str
 
@@ -52,6 +56,8 @@ class McpServerSettings(BaseSettings):
     slack_redirect_uri: str = ""
     sop_cache_ttl_seconds: int = 60
     sop_base_url: str = ""
+    search_results_base_url: str = "https://braintrust.local/knowledge"
+    search_max_results: int = 3
 
     # generate_dossier tool (DossierGenerationService)
     anthropic_api_key: str = ""
@@ -82,4 +88,24 @@ class McpServerSettings(BaseSettings):
             self.sop_base_url = f"{self.base_url}/sops"
         if not self.slack_redirect_uri:
             self.slack_redirect_uri = f"{self.base_url}/slack/oauth/callback"
+        if not self.trello_client_id:
+            self.trello_client_id = self.trello_api_key
+        if not self.trello_redirect_uri:
+            self.trello_redirect_uri = self.base_url
         return self
+
+    @property
+    def app_name(self) -> str:
+        """Backward-compatible alias for older code paths."""
+
+        return self.name
+
+
+# Backwards-compatible alias used by older modules and tests.
+Settings = McpServerSettings
+
+
+def get_settings() -> McpServerSettings:
+    """Build the MCP server settings from the current environment."""
+
+    return McpServerSettings()
