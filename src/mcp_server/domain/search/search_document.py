@@ -24,8 +24,9 @@ class SearchDocument(BaseModel):
     @classmethod
     def from_sop(cls, sop: dict[str, Any], base_url: str) -> SearchDocument:
         content: str = sop["content"]
-        # The backend's /sops response doesn't expose a `title` field today,
-        # but if/when it does, prefer it over the derived first-line title.
+        # The backend's /sops response now always includes a title (BE-18).
+        # Fall back to the derived first-line title only for stale cached
+        # entries fetched before that rollout.
         explicit_title = sop.get("title")
         if explicit_title:
             title = explicit_title[:_TITLE_MAX_LENGTH]
