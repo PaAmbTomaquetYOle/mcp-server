@@ -6,8 +6,12 @@ from starlette.testclient import TestClient
 
 from mcp_server.app import create_app
 
+from .conftest import TEST_TOKEN_ENCRYPTION_KEY
 
-def test_health_returns_ok() -> None:
+
+def test_health_returns_ok(monkeypatch) -> None:
+    monkeypatch.setenv("MCP_SERVER_TOKEN_ENCRYPTION_KEY", TEST_TOKEN_ENCRYPTION_KEY)
+
     client = TestClient(create_app())
 
     response = client.get("/health")
