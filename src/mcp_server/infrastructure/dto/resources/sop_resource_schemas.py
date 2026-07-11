@@ -20,6 +20,7 @@ class SopDetail(BaseModel):
     """Full content of a single SOP."""
 
     id: str = Field(title="SOP ID")
+    title: str = Field(title="Title")
     content: str = Field(title="Content")
     author: str = Field(title="Author")
     tags: list[str] = Field(default_factory=list, title="Tags")
