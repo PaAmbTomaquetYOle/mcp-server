@@ -30,6 +30,7 @@ from mcp_server.application.services import (
     SlackWorkspaceSearchService,
     TrelloAuthService,
 )
+from mcp_server.domain.search import RelevanceScorer, SynonymExpander, TokenNormalizer
 from mcp_server.infrastructure.adapters import (
     BackendApiAdapter,
     BackendTokenClient,
@@ -282,7 +283,9 @@ class ServerFactory:
         )
 
     def _create_sop_cache_adapter(self) -> ISopCachePort:
-        return InMemorySopCacheAdapter(ttl_seconds=self._settings.sop_cache_ttl_seconds)
+        normalizer = TokenNormalizer()
+        scorer = RelevanceScorer(normalizer=normalizer, expander=SynonymExpander(normalizer))
+        return InMemorySopCacheAdapter(ttl_seconds=self._settings.sop_cache_ttl_seconds, scorer=scorer)
 
     def _create_dossier_generation_service(self) -> IDossierGenerationService:
         return DossierGenerationService(
