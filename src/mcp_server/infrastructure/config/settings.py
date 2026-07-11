@@ -60,6 +60,12 @@ class McpServerSettings(BaseSettings):
             self.slack_redirect_uri = f"{self.base_url}/slack/oauth/callback"
         return self
 
+    @property
+    def app_name(self) -> str:
+        """Backward-compatible alias for older code paths."""
+
+        return self.name
+
 
 # Backwards-compatible alias used by older modules and tests.
 Settings = McpServerSettings
