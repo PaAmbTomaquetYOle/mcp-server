@@ -34,7 +34,7 @@ class TestGenerateDossierToolRegistration:
 
 class TestGenerateDossier:
     @pytest.mark.anyio
-    async def test_delegates_to_service(self, mock_service) -> None:
+    async def test_delegates_to_service_with_default_offboarding_scope(self, mock_service) -> None:
         controller = GenerateDossierToolController.__new__(GenerateDossierToolController)
         controller._GenerateDossierToolController__service = mock_service
 
@@ -42,7 +42,25 @@ class TestGenerateDossier:
 
         assert isinstance(result, GenerateDossierResponse)
         assert result.summary == "ok"
-        mock_service.generate.assert_awaited_once_with("Q: ...\nA: ...")
+        mock_service.generate.assert_awaited_once_with("Q: ...\nA: ...", "offboarding")
+
+    @pytest.mark.anyio
+    async def test_delegates_to_service_with_monthly_scope(self, mock_service) -> None:
+        controller = GenerateDossierToolController.__new__(GenerateDossierToolController)
+        controller._GenerateDossierToolController__service = mock_service
+
+        await controller.generate_dossier("Q: ...\nA: ...", review_scope="monthly")
+
+        mock_service.generate.assert_awaited_once_with("Q: ...\nA: ...", "monthly")
+
+    @pytest.mark.anyio
+    async def test_delegates_to_service_with_annual_scope(self, mock_service) -> None:
+        controller = GenerateDossierToolController.__new__(GenerateDossierToolController)
+        controller._GenerateDossierToolController__service = mock_service
+
+        await controller.generate_dossier("Q: ...\nA: ...", review_scope="annual")
+
+        mock_service.generate.assert_awaited_once_with("Q: ...\nA: ...", "annual")
 
     @pytest.mark.anyio
     async def test_empty_transcript_raises_tool_error(self, mock_service) -> None:
