@@ -1,14 +1,16 @@
-"""Entrypoint for the BrainTrust MCP server."""
+import asyncio
+import logging
 
-from __future__ import annotations
+import anyio
 
-import uvicorn
+from mcp_server.infrastructure.config import McpServerSettings, ServerFactory
 
-from mcp_server.infrastructure.config.settings import get_settings
+logger = logging.getLogger(__name__)
 
 
-def main() -> None:
-    """Run the MCP server over HTTP."""
+class Application:
+    def __init__(self) -> None:
+        self._settings = McpServerSettings()
 
     def run(self) -> None:
         factory = ServerFactory.get_instance(self._settings)
