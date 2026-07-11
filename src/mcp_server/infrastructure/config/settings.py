@@ -61,6 +61,10 @@ class McpServerSettings(BaseSettings):
         return self
 
 
+# Backwards-compatible alias used by older modules and tests.
+Settings = McpServerSettings
+
+
 def get_settings() -> McpServerSettings:
     """Build the MCP server settings from the current environment."""
 
