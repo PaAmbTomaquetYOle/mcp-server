@@ -59,3 +59,9 @@ class McpServerSettings(BaseSettings):
         if not self.slack_redirect_uri:
             self.slack_redirect_uri = f"{self.base_url}/slack/oauth/callback"
         return self
+
+
+def get_settings() -> McpServerSettings:
+    """Build the MCP server settings from the current environment."""
+
+    return McpServerSettings()

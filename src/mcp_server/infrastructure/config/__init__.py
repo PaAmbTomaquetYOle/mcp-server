@@ -16,6 +16,6 @@ What NOT to put here:
 """
 
 from mcp_server.infrastructure.config.server_factory import ServerFactory
-from mcp_server.infrastructure.config.settings import McpServerSettings
+from mcp_server.infrastructure.config.settings import McpServerSettings, get_settings
 
-__all__ = ["McpServerSettings", "ServerFactory"]
+__all__ = ["McpServerSettings", "ServerFactory", "get_settings"]
