@@ -60,6 +60,7 @@ class SopResourceController(BaseController):
         raw = await self.__service.handle_entity_details({"id": sop_id})
         detail = SopDetail(
             id=str(raw["id"]),
+            title=raw.get("title", ""),
             content=raw["content"],
             author=raw["author"],
             tags=list(raw.get("tags", [])),
