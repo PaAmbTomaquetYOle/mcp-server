@@ -24,6 +24,7 @@ _DOC = SearchDocument(
 
 _RAW_SOP = {
     "id": "1",
+    "title": "Restart deploy pipeline",
     "content": "Restart deploy pipeline",
     "author": "U1",
     "tags": ["deploy"],
@@ -85,6 +86,7 @@ class TestGetSop:
         result = SopDetail.model_validate(json.loads(raw))
 
         assert result.id == "1"
+        assert result.title == "Restart deploy pipeline"
         assert result.content == "Restart deploy pipeline"
         assert result.version == 2
         mock_service.handle_entity_details.assert_awaited_once_with({"id": "1"})
