@@ -295,6 +295,7 @@ class ServerFactory:
             search_connector=self.get_search_connector_service(),
             max_tool_iterations=self._settings.dossier_generation_max_tool_iterations,
             max_tokens=self._settings.dossier_generation_max_tokens,
+            max_tokens_annual=self._settings.dossier_generation_max_tokens_annual,
         )
 
     def get_search_connector_service(self) -> ISearchConnectorService:

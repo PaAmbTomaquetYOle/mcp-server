@@ -261,6 +261,90 @@ class TestDossierGenerationService:
         assert result.sections == []
 
     @pytest.mark.anyio
+    async def test_default_scope_uses_offboarding_prompt_and_max_tokens(
+        self, mock_backend_api, mock_search_connector
+    ) -> None:
+        final_json = json.dumps({"summary": "ok", "sections": []})
+        client = _make_client([_FakeMessage([_TextBlock(final_json)], "end_turn")])
+        service = DossierGenerationService(
+            anthropic_client=client,
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+            max_tokens=4096,
+            max_tokens_annual=8192,
+        )
+
+        await service.generate("transcript")
+
+        kwargs = client.messages.create.call_args.kwargs
+        assert kwargs["max_tokens"] == 4096
+        assert "offboarding handover dossiers" in kwargs["system"]
+
+    @pytest.mark.anyio
+    async def test_monthly_scope_uses_monthly_prompt_and_default_max_tokens(
+        self, mock_backend_api, mock_search_connector
+    ) -> None:
+        final_json = json.dumps({"summary": "ok", "sections": []})
+        client = _make_client([_FakeMessage([_TextBlock(final_json)], "end_turn")])
+        service = DossierGenerationService(
+            anthropic_client=client,
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+            max_tokens=4096,
+            max_tokens_annual=8192,
+        )
+
+        await service.generate("transcript", review_scope="monthly")
+
+        kwargs = client.messages.create.call_args.kwargs
+        assert kwargs["max_tokens"] == 4096
+        assert "monthly knowledge-retention review" in kwargs["system"]
+        assert "lightweight" in kwargs["system"]
+
+    @pytest.mark.anyio
+    async def test_annual_scope_uses_annual_prompt_and_annual_max_tokens(
+        self, mock_backend_api, mock_search_connector
+    ) -> None:
+        final_json = json.dumps({"summary": "ok", "sections": []})
+        client = _make_client([_FakeMessage([_TextBlock(final_json)], "end_turn")])
+        service = DossierGenerationService(
+            anthropic_client=client,
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+            max_tokens=4096,
+            max_tokens_annual=8192,
+        )
+
+        await service.generate("transcript", review_scope="annual")
+
+        kwargs = client.messages.create.call_args.kwargs
+        assert kwargs["max_tokens"] == 8192
+        assert "annual knowledge-retention review" in kwargs["system"]
+        assert "exhaustive" in kwargs["system"]
+
+    @pytest.mark.anyio
+    async def test_annual_max_tokens_defaults_to_max_tokens_when_unset(
+        self, mock_backend_api, mock_search_connector
+    ) -> None:
+        """Callers that don't configure max_tokens_annual get the same budget as before MCP-15."""
+        final_json = json.dumps({"summary": "ok", "sections": []})
+        client = _make_client([_FakeMessage([_TextBlock(final_json)], "end_turn")])
+        service = DossierGenerationService(
+            anthropic_client=client,
+            model="test-model",
+            backend_api=mock_backend_api,
+            search_connector=mock_search_connector,
+            max_tokens=4096,
+        )
+
+        await service.generate("transcript", review_scope="annual")
+
+        assert client.messages.create.call_args.kwargs["max_tokens"] == 4096
+
+    @pytest.mark.anyio
     async def test_extracts_first_fence_when_multiple_json_blocks_present(
         self, mock_backend_api, mock_search_connector
     ) -> None:
