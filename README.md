@@ -28,7 +28,7 @@ The tool provider of **BrainTrust**: an [MCP](https://modelcontextprotocol.io) s
 | Tool | What it does |
 |---|---|
 | `ping` | Health check — returns `pong` to verify the server is reachable. |
-| `generate_dossier` | **The dossier writer.** Runs an LLM (Claude) over a completed interview transcript to produce a summary + typed sections, optionally consulting `search_prior_dossiers`/`search_sops` as native tools for extra context. Backed by `DossierGenerationService`. |
+| `generate_dossier` | **The dossier writer.** Runs an LLM (Claude) over a completed interview transcript to produce a summary + typed sections, optionally consulting `search_prior_dossiers`/`search_sops` as native tools for extra context. `review_scope` (`offboarding` default / `monthly` / `annual`, MCP-15) selects the prompt and token budget: offboarding/monthly stay lightweight, annual is exhaustive with a larger token budget. Backed by `DossierGenerationService`. |
 | `get_dossier` | Search past offboarding dossiers by `employee_name` and/or `process_id` (proxies backend's API). |
 | `get_jira_issue` / `get_pending_jira_issues` | Fetch a specific Jira issue, or all pending issues assigned to a user. Requires Jira auth. |
 | `get_trello_card` / `get_pending_trello_cards` | Fetch a specific Trello card, or all pending cards assigned to a user. Requires Trello auth. |
