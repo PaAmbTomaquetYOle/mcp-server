@@ -58,6 +58,10 @@ class McpServerSettings(BaseSettings):
     anthropic_model: str = "claude-sonnet-4-5-20250929"
     dossier_generation_max_tool_iterations: int = 4
     dossier_generation_max_tokens: int = 4096
+    # MCP-15: the annual review scope is exhaustive (all accumulated knowledge,
+    # not just recent activity) and routinely needs more headroom than the
+    # offboarding/monthly-review default above.
+    dossier_generation_max_tokens_annual: int = 8192
 
     @field_validator("token_encryption_key")
     @classmethod
