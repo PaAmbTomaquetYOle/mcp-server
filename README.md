@@ -14,6 +14,8 @@
 
 The tool provider of **BrainTrust**: an [MCP](https://modelcontextprotocol.io) server, built with the official Python SDK's `FastMCP`, that exposes Jira/Trello/Slack integrations and offboarding-dossier tools over streamable HTTP. **slack-agent**'s Gemini-driven interview agent connects to it as an MCP client during the guided interview; **backend**'s `LLMDossierGenerator` connects to it to generate the handover dossier itself — the LLM call for dossier writing lives *here*, not in the backend, so it's reusable by any MCP client and the backend never needs an LLM SDK or API key.
 
+The shared dev stack is owned by the separate `infra/` repository. That stack runs this server alongside the backend and Slack agent, and exposes the live service through the Cloudflare tunnel at `braintrust-mcp.kire.ovh`.
+
 ### 📚 Contents
 
 - [🧰 Tools](#-tools)
@@ -90,6 +92,12 @@ Then connect it to:
 
 ```text
 http://localhost:8000/mcp
+```
+
+In the shared dev environment the equivalent public endpoint is:
+
+```text
+https://braintrust-mcp.kire.ovh/mcp
 ```
 
 ## ⚙️ Configuration
