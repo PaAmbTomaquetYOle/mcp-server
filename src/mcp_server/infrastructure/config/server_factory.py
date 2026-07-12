@@ -108,6 +108,7 @@ class ServerFactory:
         self._knowledge_graph_adapter: IKnowledgeGraphPort | None = None
         self._event_publisher_adapter: IEventPublisherPort | None = None
         self._token_storage: ITokenStoragePort | None = None
+        self._oauth_http_client: AsyncClient | None = None
 
     @classmethod
     def get_instance(cls, settings: McpServerSettings) -> ServerFactory:
@@ -180,12 +181,19 @@ class ServerFactory:
             api_secret=self._settings.trello_api_secret,
         )
 
+    def _get_oauth_http_client(self) -> AsyncClient:
+        """Return the singleton HTTP client shared by all OAuth auth adapters."""
+        if self._oauth_http_client is None:
+            self._oauth_http_client = AsyncClient()
+        return self._oauth_http_client
+
     def _create_jira_auth_adapter(self) -> JiraAuthAdapter:
         return JiraAuthAdapter(
             token_storage_port=self._create_token_storage(),
             client_id=self._settings.jira_client_id,
             client_secret=self._settings.jira_client_secret,
             redirect_uri=self._settings.jira_redirect_uri,
+            client=self._get_oauth_http_client(),
         )
 
     def _create_trello_auth_adapter(self) -> TrelloAuthAdapter:
@@ -193,6 +201,7 @@ class ServerFactory:
             token_storage_port=self._create_token_storage(),
             api_key=self._settings.trello_api_key,
             app_name=self._settings.trello_app_name,
+            client=self._get_oauth_http_client(),
         )
 
     def _create_jira_auth_service(self) -> JiraAuthService:
@@ -271,6 +280,7 @@ class ServerFactory:
             client_id=self._settings.slack_client_id,
             client_secret=self._settings.slack_client_secret,
             redirect_uri=self._settings.slack_redirect_uri,
+            client=self._get_oauth_http_client(),
         )
 
     def _create_slack_auth_service(self) -> SlackAuthService:

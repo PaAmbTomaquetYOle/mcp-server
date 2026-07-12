@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -16,21 +16,25 @@ def token_storage():
 
 
 @pytest.fixture
-def adapter(token_storage):
+def http_client():
+    return AsyncMock()
+
+
+@pytest.fixture
+def adapter(token_storage, http_client):
     return JiraAuthAdapter(
         token_storage_port=token_storage,
         client_id="test-client-id",
         client_secret="test-client-secret",
         redirect_uri="http://localhost:8000/callback",
+        client=http_client,
     )
 
 
-def _mock_http_client(token_response, me_response=None):
-    """Create a mock AsyncClient that handles both token and /me requests."""
+def _configure_http_client(mock_client, token_response, me_response=None):
+    """Configure a mock AsyncClient to handle both token and /me requests."""
     if me_response is None:
         me_response = {"email": "user@example.com", "account_id": "abc123"}
-
-    mock_client = AsyncMock()
 
     token_resp = Mock()
     token_resp.json.return_value = token_response
@@ -42,8 +46,6 @@ def _mock_http_client(token_response, me_response=None):
 
     mock_client.post.return_value = token_resp
     mock_client.get.return_value = me_resp
-
-    return mock_client
 
 
 class TestGenerateAuthUrl:
@@ -81,18 +83,15 @@ class TestGenerateAuthUrl:
 
 class TestExchangeAuthCode:
     @pytest.mark.anyio
-    async def test_success_stores_tokens_under_email(self, adapter, token_storage):
+    async def test_success_stores_tokens_under_email(self, adapter, token_storage, http_client):
         token_response = {
             "access_token": "new-access-token",
             "refresh_token": "new-refresh-token",
             "expires_in": 3600,
         }
-        mock_client = _mock_http_client(token_response)
-        with patch("mcp_server.infrastructure.adapters.jira_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        _configure_http_client(http_client, token_response)
 
-            result = await adapter.exchange_auth_code("auth-code-123")
+        result = await adapter.exchange_auth_code("auth-code-123")
 
         assert result["email"] == "user@example.com"
         assert result["access_token"] == "new-access-token"
@@ -106,17 +105,14 @@ class TestExchangeAuthCode:
         )
 
     @pytest.mark.anyio
-    async def test_sends_correct_payload(self, adapter, token_storage):
+    async def test_sends_correct_payload(self, adapter, token_storage, http_client):
         token_response = {"access_token": "at", "refresh_token": "rt", "expires_in": 3600}
-        mock_client = _mock_http_client(token_response)
-        with patch("mcp_server.infrastructure.adapters.jira_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        _configure_http_client(http_client, token_response)
 
-            await adapter.exchange_auth_code("the-code")
+        await adapter.exchange_auth_code("the-code")
 
-        mock_client.post.assert_awaited_once()
-        call_kwargs = mock_client.post.call_args
+        http_client.post.assert_awaited_once()
+        call_kwargs = http_client.post.call_args
         assert call_kwargs[1]["json"]["grant_type"] == "authorization_code"
         assert call_kwargs[1]["json"]["code"] == "the-code"
         assert call_kwargs[1]["json"]["client_id"] == "test-client-id"
@@ -124,44 +120,33 @@ class TestExchangeAuthCode:
         assert call_kwargs[1]["json"]["redirect_uri"] == "http://localhost:8000/callback"
 
     @pytest.mark.anyio
-    async def test_fetches_user_email_from_atlassian(self, adapter, token_storage):
+    async def test_fetches_user_email_from_atlassian(self, adapter, token_storage, http_client):
         token_response = {"access_token": "at", "refresh_token": "rt", "expires_in": 3600}
-        mock_client = _mock_http_client(token_response, me_response={"email": "dev@corp.com"})
-        with patch("mcp_server.infrastructure.adapters.jira_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        _configure_http_client(http_client, token_response, me_response={"email": "dev@corp.com"})
 
-            result = await adapter.exchange_auth_code("code")
+        result = await adapter.exchange_auth_code("code")
 
         assert result["email"] == "dev@corp.com"
-        mock_client.get.assert_awaited_once()
-        call_args = mock_client.get.call_args
+        http_client.get.assert_awaited_once()
+        call_args = http_client.get.call_args
         assert "Bearer at" in call_args[1]["headers"]["Authorization"]
 
     @pytest.mark.anyio
-    async def test_http_error_raises_auth_code_exchange_exception(self, adapter):
-        mock_client = AsyncMock()
+    async def test_http_error_raises_auth_code_exchange_exception(self, adapter, http_client):
         mock_response_obj = Mock()
         mock_response_obj.raise_for_status.side_effect = HTTPStatusError(
             "Bad Request",
             request=Request("POST", "https://auth.atlassian.com/oauth/token"),
             response=Response(400, text="invalid_grant"),
         )
-        mock_client.post.return_value = mock_response_obj
-        with patch("mcp_server.infrastructure.adapters.jira_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        http_client.post.return_value = mock_response_obj
 
-            with pytest.raises(AuthCodeExchangeException):
-                await adapter.exchange_auth_code("bad-code")
+        with pytest.raises(AuthCodeExchangeException):
+            await adapter.exchange_auth_code("bad-code")
 
     @pytest.mark.anyio
-    async def test_network_error_raises_auth_code_exchange_exception(self, adapter):
-        mock_client = AsyncMock()
-        mock_client.post.side_effect = ConnectionError("network down")
-        with patch("mcp_server.infrastructure.adapters.jira_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+    async def test_network_error_raises_auth_code_exchange_exception(self, adapter, http_client):
+        http_client.post.side_effect = ConnectionError("network down")
 
-            with pytest.raises(AuthCodeExchangeException):
-                await adapter.exchange_auth_code("some-code")
+        with pytest.raises(AuthCodeExchangeException):
+            await adapter.exchange_auth_code("some-code")
