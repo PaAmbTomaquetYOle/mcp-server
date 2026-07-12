@@ -1,5 +1,4 @@
 from unittest.mock import AsyncMock, Mock
-
 from urllib.parse import parse_qs, urlparse
 
 import pytest
