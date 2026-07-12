@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
+
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -16,22 +17,26 @@ def token_storage():
 
 
 @pytest.fixture
-def adapter(token_storage):
+def http_client():
+    return AsyncMock()
+
+
+@pytest.fixture
+def adapter(token_storage, http_client):
     return SlackAuthAdapter(
         token_storage_port=token_storage,
         client_id="test-client-id",
         client_secret="test-client-secret",
         redirect_uri="http://localhost:8000/slack/oauth/callback",
+        client=http_client,
     )
 
 
-def _mock_http_client(oauth_response):
-    mock_client = AsyncMock()
+def _configure_http_client(mock_client, oauth_response):
     resp = Mock()
     resp.json.return_value = oauth_response
     resp.raise_for_status = Mock()
     mock_client.post.return_value = resp
-    return mock_client
 
 
 class TestGenerateAuthUrl:
@@ -69,18 +74,15 @@ class TestGenerateAuthUrl:
 
 class TestExchangeAuthCode:
     @pytest.mark.anyio
-    async def test_success_stores_token_under_slack_user_id(self, adapter, token_storage):
+    async def test_success_stores_token_under_slack_user_id(self, adapter, token_storage, http_client):
         oauth_response = {
             "ok": True,
             "team": {"id": "T1"},
             "authed_user": {"id": "U1", "access_token": "xoxp-new-token"},
         }
-        mock_client = _mock_http_client(oauth_response)
-        with patch("mcp_server.infrastructure.adapters.slack_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        _configure_http_client(http_client, oauth_response)
 
-            result = await adapter.exchange_auth_code("auth-code-123")
+        result = await adapter.exchange_auth_code("auth-code-123")
 
         assert result["slack_user_id"] == "U1"
         assert result["team_id"] == "T1"
@@ -88,57 +90,43 @@ class TestExchangeAuthCode:
         token_storage.save_tokens.assert_awaited_once_with("U1", "xoxp-new-token", "", 0)
 
     @pytest.mark.anyio
-    async def test_sends_correct_payload(self, adapter, token_storage):
+    async def test_sends_correct_payload(self, adapter, token_storage, http_client):
         oauth_response = {"ok": True, "team": {"id": "T1"}, "authed_user": {"id": "U1", "access_token": "xoxp-t"}}
-        mock_client = _mock_http_client(oauth_response)
-        with patch("mcp_server.infrastructure.adapters.slack_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        _configure_http_client(http_client, oauth_response)
 
-            await adapter.exchange_auth_code("the-code")
+        await adapter.exchange_auth_code("the-code")
 
-        mock_client.post.assert_awaited_once()
-        call_kwargs = mock_client.post.call_args
+        http_client.post.assert_awaited_once()
+        call_kwargs = http_client.post.call_args
         assert call_kwargs[1]["data"]["code"] == "the-code"
         assert call_kwargs[1]["data"]["client_id"] == "test-client-id"
         assert call_kwargs[1]["data"]["client_secret"] == "test-client-secret"
         assert call_kwargs[1]["data"]["redirect_uri"] == "http://localhost:8000/slack/oauth/callback"
 
     @pytest.mark.anyio
-    async def test_slack_not_ok_raises_auth_code_exchange_exception(self, adapter):
+    async def test_slack_not_ok_raises_auth_code_exchange_exception(self, adapter, http_client):
         oauth_response = {"ok": False, "error": "invalid_code"}
-        mock_client = _mock_http_client(oauth_response)
-        with patch("mcp_server.infrastructure.adapters.slack_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        _configure_http_client(http_client, oauth_response)
 
-            with pytest.raises(AuthCodeExchangeException, match="invalid_code"):
-                await adapter.exchange_auth_code("bad-code")
+        with pytest.raises(AuthCodeExchangeException, match="invalid_code"):
+            await adapter.exchange_auth_code("bad-code")
 
     @pytest.mark.anyio
-    async def test_http_error_raises_auth_code_exchange_exception(self, adapter):
-        mock_client = AsyncMock()
+    async def test_http_error_raises_auth_code_exchange_exception(self, adapter, http_client):
         mock_response_obj = Mock()
         mock_response_obj.raise_for_status.side_effect = HTTPStatusError(
             "Bad Request",
             request=Request("POST", "https://slack.com/api/oauth.v2.access"),
             response=Response(400, text="invalid_grant"),
         )
-        mock_client.post.return_value = mock_response_obj
-        with patch("mcp_server.infrastructure.adapters.slack_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        http_client.post.return_value = mock_response_obj
 
-            with pytest.raises(AuthCodeExchangeException):
-                await adapter.exchange_auth_code("bad-code")
+        with pytest.raises(AuthCodeExchangeException):
+            await adapter.exchange_auth_code("bad-code")
 
     @pytest.mark.anyio
-    async def test_network_error_raises_auth_code_exchange_exception(self, adapter):
-        mock_client = AsyncMock()
-        mock_client.post.side_effect = ConnectionError("network down")
-        with patch("mcp_server.infrastructure.adapters.slack_auth.AsyncClient") as mock_cls:
-            mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+    async def test_network_error_raises_auth_code_exchange_exception(self, adapter, http_client):
+        http_client.post.side_effect = ConnectionError("network down")
 
-            with pytest.raises(AuthCodeExchangeException):
-                await adapter.exchange_auth_code("some-code")
+        with pytest.raises(AuthCodeExchangeException):
+            await adapter.exchange_auth_code("some-code")

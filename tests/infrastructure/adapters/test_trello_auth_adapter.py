@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -15,11 +15,17 @@ def token_storage():
 
 
 @pytest.fixture
-def adapter(token_storage):
+def http_client():
+    return AsyncMock()
+
+
+@pytest.fixture
+def adapter(token_storage, http_client):
     return TrelloAuthAdapter(
         token_storage_port=token_storage,
         api_key="test-api-key",
         app_name="TestApp",
+        client=http_client,
     )
 
 
@@ -57,27 +63,15 @@ class TestGenerateAuthUrl:
         assert params["expiration"] == ["never"]
 
 
-def _mock_resolve_username(username: str = "johndoe"):
-    mock_response = MagicMock()
-    mock_response.json.return_value = {"username": username}
-    mock_response.raise_for_status = MagicMock()
-
-    mock_client = AsyncMock()
-    mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=False)
-
-    return patch(
-        "mcp_server.infrastructure.adapters.trello_auth.AsyncClient",
-        return_value=mock_client,
-    )
-
-
 class TestStoreToken:
     @pytest.mark.anyio
-    async def test_resolves_username_and_stores_token(self, adapter, token_storage):
-        with _mock_resolve_username("johndoe"):
-            username = await adapter.store_token("my-token")
+    async def test_resolves_username_and_stores_token(self, adapter, token_storage, http_client):
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"username": "johndoe"}
+        mock_response.raise_for_status = MagicMock()
+        http_client.get = AsyncMock(return_value=mock_response)
+
+        username = await adapter.store_token("my-token")
 
         assert username == "johndoe"
         token_storage.save_tokens.assert_awaited_once_with(
@@ -98,10 +92,8 @@ class TestStoreToken:
             await adapter.store_token("   ")
 
     @pytest.mark.anyio
-    async def test_api_failure_raises_exception(self, adapter):
-        with patch(
-            "mcp_server.infrastructure.adapters.trello_auth.AsyncClient",
-            side_effect=Exception("connection refused"),
-        ):
-            with pytest.raises(TrelloTokenStorageException, match="Failed to resolve Trello username"):
-                await adapter.store_token("my-token")
+    async def test_api_failure_raises_exception(self, adapter, http_client):
+        http_client.get.side_effect = Exception("connection refused")
+
+        with pytest.raises(TrelloTokenStorageException, match="Failed to resolve Trello username"):
+            await adapter.store_token("my-token")
