@@ -14,16 +14,19 @@ class TrelloAuthAdapter(ITrelloAuthPort):
     __token_storage: ITokenStoragePort
     __api_key: str
     __app_name: str
+    __client: AsyncClient
 
     def __init__(
         self,
         token_storage_port: ITokenStoragePort,
         api_key: str,
         app_name: str,
+        client: AsyncClient,
     ) -> None:
         self.__token_storage = token_storage_port
         self.__api_key = api_key
         self.__app_name = app_name
+        self.__client = client
 
     async def generate_auth_url(self) -> str:
         params = {
@@ -51,13 +54,12 @@ class TrelloAuthAdapter(ITrelloAuthPort):
 
     async def _resolve_username(self, token: str) -> str:
         try:
-            async with AsyncClient() as client:
-                response = await client.get(
-                    TRELLO_MEMBERS_ME_URL,
-                    params={"key": self.__api_key, "token": token},
-                )
-                response.raise_for_status()
-                return str(response.json()["username"])
+            response = await self.__client.get(
+                TRELLO_MEMBERS_ME_URL,
+                params={"key": self.__api_key, "token": token},
+            )
+            response.raise_for_status()
+            return str(response.json()["username"])
         except HTTPStatusError as exc:
             raise TrelloTokenStorageException(
                 "unknown",

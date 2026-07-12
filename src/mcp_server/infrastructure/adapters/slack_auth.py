@@ -21,6 +21,7 @@ class SlackAuthAdapter(ISlackAuthPort):
     __client_id: str
     __client_secret: str
     __redirect_uri: str
+    __client: AsyncClient
 
     def __init__(
         self,
@@ -28,11 +29,13 @@ class SlackAuthAdapter(ISlackAuthPort):
         client_id: str,
         client_secret: str,
         redirect_uri: str,
+        client: AsyncClient,
     ) -> None:
         self.__token_storage = token_storage_port
         self.__client_id = client_id
         self.__client_secret = client_secret
         self.__redirect_uri = redirect_uri
+        self.__client = client
 
     async def generate_auth_url(self, state: str) -> str:
         params = {
@@ -45,26 +48,25 @@ class SlackAuthAdapter(ISlackAuthPort):
 
     async def exchange_auth_code(self, code: str) -> SlackAuthResult:
         try:
-            async with AsyncClient() as client:
-                response = await client.post(
-                    SLACK_TOKEN_URL,
-                    data={
-                        "client_id": self.__client_id,
-                        "client_secret": self.__client_secret,
-                        "code": code,
-                        "redirect_uri": self.__redirect_uri,
-                    },
-                )
-                response.raise_for_status()
-                data = response.json()
+            response = await self.__client.post(
+                SLACK_TOKEN_URL,
+                data={
+                    "client_id": self.__client_id,
+                    "client_secret": self.__client_secret,
+                    "code": code,
+                    "redirect_uri": self.__redirect_uri,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
 
-                if not data.get("ok", False):
-                    raise AuthCodeExchangeException("unknown", str(data.get("error")))
+            if not data.get("ok", False):
+                raise AuthCodeExchangeException("unknown", str(data.get("error")))
 
-                authed_user = data["authed_user"]
-                slack_user_id = authed_user["id"]
-                access_token = authed_user["access_token"]
-                team_id = data["team"]["id"]
+            authed_user = data["authed_user"]
+            slack_user_id = authed_user["id"]
+            access_token = authed_user["access_token"]
+            team_id = data["team"]["id"]
 
         except AuthCodeExchangeException:
             raise
