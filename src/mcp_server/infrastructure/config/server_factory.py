@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 
+from aiokafka import AIOKafkaConsumer
 from anthropic import AsyncAnthropic
 from httpx2 import AsyncClient
 from mcp.server import FastMCP
@@ -9,6 +10,7 @@ from mcp.server import FastMCP
 from mcp_server.application.ports import (
     IBackendApiPort,
     IBackendTokenProvider,
+    IEventConsumerPort,
     IEventPublisherPort,
     IKnowledgeGraphPort,
     ISlackApiPort,
@@ -30,6 +32,7 @@ from mcp_server.application.services import (
     SlackWorkspaceSearchService,
     TrelloAuthService,
 )
+from mcp_server.domain.search import RelevanceScorer, SynonymExpander, TokenNormalizer
 from mcp_server.infrastructure.adapters import (
     BackendApiAdapter,
     BackendTokenClient,
@@ -37,15 +40,20 @@ from mcp_server.infrastructure.adapters import (
     JiraAdapter,
     JiraAuthAdapter,
     KafkaEventPublisherAdapter,
+    KafkaSopCacheConsumerAdapter,
     KnowledgeGraphApiAdapter,
     SlackApiAdapter,
     SlackAuthAdapter,
     SlackWorkspaceSearchAdapter,
     SqliteTokenStorage,
+    TokenEncryptor,
     TrelloAdapter,
     TrelloAuthAdapter,
 )
-from mcp_server.infrastructure.config.settings import McpServerSettings
+from mcp_server.infrastructure.config.settings import (
+    McpServerSettings,
+    kafka_connection_kwargs,
+)
 from mcp_server.infrastructure.controllers.prompts import (
     ExtractJiraTasksPromptController,
     ExtractTrelloTasksPromptController,
@@ -53,6 +61,11 @@ from mcp_server.infrastructure.controllers.prompts import (
     SearchConnectorPromptController,
     SlackLoginPromptController,
     TrelloLoginPromptController,
+)
+from mcp_server.infrastructure.controllers.resources import (
+    DossierResourceController,
+    KnowledgeGraphResourceController,
+    SopResourceController,
 )
 from mcp_server.infrastructure.controllers.routes import (
     OAuthCallbackController,
@@ -100,6 +113,9 @@ class ServerFactory:
         self._backend_token_provider: IBackendTokenProvider | None = None
         self._knowledge_graph_adapter: IKnowledgeGraphPort | None = None
         self._event_publisher_adapter: IEventPublisherPort | None = None
+        self._event_consumer: IEventConsumerPort | None = None
+        self._token_storage: ITokenStoragePort | None = None
+        self._oauth_http_client: AsyncClient | None = None
 
     @classmethod
     def get_instance(cls, settings: McpServerSettings) -> ServerFactory:
@@ -143,11 +159,19 @@ class ServerFactory:
         )
         self._register_tools(server)
         self._register_prompts(server)
+        self._register_resources(server)
         self._register_routes(server)
         return server
     
     def _create_token_storage(self) -> ITokenStoragePort:
-        return SqliteTokenStorage(db_path=self._settings.token_db_path)
+        """Return the singleton token storage, shared by all adapters/services that need it."""
+        if self._token_storage is None:
+            encryptor = TokenEncryptor(self._settings.token_encryption_key)
+            self._token_storage = SqliteTokenStorage(
+                db_path=self._settings.token_db_path,
+                encryptor=encryptor,
+            )
+        return self._token_storage
 
     def _create_jira_adapter(self) -> JiraAdapter:
         return JiraAdapter(
@@ -164,12 +188,19 @@ class ServerFactory:
             api_secret=self._settings.trello_api_secret,
         )
 
+    def _get_oauth_http_client(self) -> AsyncClient:
+        """Return the singleton HTTP client shared by all OAuth auth adapters."""
+        if self._oauth_http_client is None:
+            self._oauth_http_client = AsyncClient()
+        return self._oauth_http_client
+
     def _create_jira_auth_adapter(self) -> JiraAuthAdapter:
         return JiraAuthAdapter(
             token_storage_port=self._create_token_storage(),
             client_id=self._settings.jira_client_id,
             client_secret=self._settings.jira_client_secret,
             redirect_uri=self._settings.jira_redirect_uri,
+            client=self._get_oauth_http_client(),
         )
 
     def _create_trello_auth_adapter(self) -> TrelloAuthAdapter:
@@ -177,6 +208,7 @@ class ServerFactory:
             token_storage_port=self._create_token_storage(),
             api_key=self._settings.trello_api_key,
             app_name=self._settings.trello_app_name,
+            client=self._get_oauth_http_client(),
         )
 
     def _create_jira_auth_service(self) -> JiraAuthService:
@@ -237,8 +269,38 @@ class ServerFactory:
         if self._event_publisher_adapter is None:
             self._event_publisher_adapter = KafkaEventPublisherAdapter(
                 bootstrap_servers=self._settings.kafka_bootstrap_servers,
+                client_id=self._settings.kafka_client_id,
+                connection_kwargs=kafka_connection_kwargs(self._settings),
             )
         return self._event_publisher_adapter
+
+    def create_event_consumer(self) -> IEventConsumerPort:
+        """Return the singleton reactive SOP-cache Kafka consumer.
+
+        Must be called from inside a running event loop (e.g. the async
+        server lifespan in main.py) — AIOKafkaConsumer, like AIOKafkaProducer,
+        requires one to be constructed.
+        """
+        if self._event_consumer is None:
+            prefix = self._settings.kafka_topic_prefix
+            topics = (
+                f"{prefix}.sop.created",
+                f"{prefix}.sop.updated",
+                f"{prefix}.sop.deleted",
+            )
+            consumer = AIOKafkaConsumer(
+                *topics,
+                bootstrap_servers=self._settings.kafka_bootstrap_servers,
+                client_id=self._settings.kafka_client_id,
+                group_id=self._settings.kafka_consumer_group_id,
+                enable_auto_commit=True,
+                **kafka_connection_kwargs(self._settings),
+            )
+            self._event_consumer = KafkaSopCacheConsumerAdapter(
+                consumer=consumer,
+                search_connector=self.get_search_connector_service(),
+            )
+        return self._event_consumer
 
     def _create_knowledge_graph_service(self) -> IKnowledgeGraphService:
         return KnowledgeGraphService(
@@ -255,6 +317,7 @@ class ServerFactory:
             client_id=self._settings.slack_client_id,
             client_secret=self._settings.slack_client_secret,
             redirect_uri=self._settings.slack_redirect_uri,
+            client=self._get_oauth_http_client(),
         )
 
     def _create_slack_auth_service(self) -> SlackAuthService:
@@ -267,7 +330,9 @@ class ServerFactory:
         )
 
     def _create_sop_cache_adapter(self) -> ISopCachePort:
-        return InMemorySopCacheAdapter(ttl_seconds=self._settings.sop_cache_ttl_seconds)
+        normalizer = TokenNormalizer()
+        scorer = RelevanceScorer(normalizer=normalizer, expander=SynonymExpander(normalizer))
+        return InMemorySopCacheAdapter(ttl_seconds=self._settings.sop_cache_ttl_seconds, scorer=scorer)
 
     def _create_dossier_generation_service(self) -> IDossierGenerationService:
         return DossierGenerationService(
@@ -276,7 +341,16 @@ class ServerFactory:
             backend_api=self._create_backend_api_adapter(),
             search_connector=self.get_search_connector_service(),
             max_tool_iterations=self._settings.dossier_generation_max_tool_iterations,
+            max_tokens=self._settings.dossier_generation_max_tokens,
+            max_tokens_annual=self._settings.dossier_generation_max_tokens_annual,
         )
+
+    async def close(self) -> None:
+        """Release any long-lived connections created by this factory (called on shutdown)."""
+        if self._event_publisher_adapter is not None:
+            await self._event_publisher_adapter.close()
+        if self._event_consumer is not None:
+            await self._event_consumer.stop()
 
     def get_search_connector_service(self) -> ISearchConnectorService:
         """Return the singleton search connector service, shared by tools, routes, and the cache-refresh task."""
@@ -328,6 +402,16 @@ class ServerFactory:
         TrelloLoginPromptController(server).register()
         SearchConnectorPromptController(server).register()
         SlackLoginPromptController(server).register()
+
+    def _register_resources(self, server: FastMCP) -> None:
+        search_connector_service = self.get_search_connector_service()
+        SopResourceController(server, search_connector_service).register()
+
+        backend_api_adapter = self._create_backend_api_adapter()
+        DossierResourceController(server, backend_api_adapter).register()
+
+        knowledge_graph_adapter = self._create_knowledge_graph_adapter()
+        KnowledgeGraphResourceController(server, knowledge_graph_adapter).register()
 
     def _register_routes(self, server: FastMCP) -> None:
         jira_auth_service = self._create_jira_auth_service()

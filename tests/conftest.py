@@ -4,9 +4,12 @@ import json
 from unittest.mock import AsyncMock
 
 import pytest
+from cryptography.fernet import Fernet
 from mcp.server import FastMCP
 
 from mcp_server.infrastructure.config import McpServerSettings, ServerFactory
+
+TEST_TOKEN_ENCRYPTION_KEY = Fernet.generate_key().decode()
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +22,11 @@ def _reset_server_factory():
 @pytest.fixture
 def make_settings():
     def _factory(**overrides) -> McpServerSettings:
-        defaults: dict = {"name": "test-server", "_env_file": None}
+        defaults: dict = {
+            "name": "test-server",
+            "_env_file": None,
+            "token_encryption_key": TEST_TOKEN_ENCRYPTION_KEY,
+        }
         defaults.update(overrides)
         return McpServerSettings(**defaults)
 

@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 import logging
+import time
 from typing import Any
 
 from mcp.server import FastMCP
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 _SIGNATURE_HEADER = "X-Slack-Signature"
 _TIMESTAMP_HEADER = "X-Slack-Request-Timestamp"
+_MAX_TIMESTAMP_SKEW_SECONDS = 300
 
 
 class SlackEventsRouteController(BaseController):
@@ -56,6 +58,13 @@ class SlackEventsRouteController(BaseController):
         timestamp = request.headers.get(_TIMESTAMP_HEADER)
         signature = request.headers.get(_SIGNATURE_HEADER)
         if not timestamp or not signature:
+            return False
+
+        try:
+            timestamp_age = abs(int(time.time()) - int(timestamp))
+        except ValueError:
+            return False
+        if timestamp_age > _MAX_TIMESTAMP_SKEW_SECONDS:
             return False
 
         basestring = f"v0:{timestamp}:{body.decode()}".encode()

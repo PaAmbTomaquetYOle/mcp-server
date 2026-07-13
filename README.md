@@ -30,7 +30,7 @@ The shared dev stack is owned by the separate `infra/` repository. That stack ru
 | Tool | What it does |
 |---|---|
 | `ping` | Health check — returns `pong` to verify the server is reachable. |
-| `generate_dossier` | **The dossier writer.** Runs an LLM (Claude) over a completed interview transcript to produce a summary + typed sections, optionally consulting `search_prior_dossiers`/`search_sops` as native tools for extra context. Backed by `DossierGenerationService`. |
+| `generate_dossier` | **The dossier writer.** Runs an LLM (Claude) over a completed interview transcript to produce a summary + typed sections, optionally consulting `search_prior_dossiers`/`search_sops` as native tools for extra context. `review_scope` (`offboarding` default / `monthly` / `annual`, MCP-15) selects the prompt and token budget: offboarding/monthly stay lightweight, annual is exhaustive with a larger token budget. Backed by `DossierGenerationService`. |
 | `get_dossier` | Search past offboarding dossiers by `employee_name` and/or `process_id` (proxies backend's API). |
 | `get_jira_issue` / `get_pending_jira_issues` | Fetch a specific Jira issue, or all pending issues assigned to a user. Requires Jira auth. |
 | `get_trello_card` / `get_pending_trello_cards` | Fetch a specific Trello card, or all pending cards assigned to a user. Requires Trello auth. |
@@ -63,10 +63,26 @@ slack-agent  ──MCP client──▶  mcp-server  ◀──MCP client──  b
                                      │
                                      ├─▶ Jira / Trello / Slack APIs
                                      ├─▶ Anthropic (Claude) — generate_dossier
-                                     └─▶ backend's REST API — get_dossier, SOP search
+                                     ├─▶ backend's REST API — get_dossier, SOP search
+                                     ├─▶ Kafka producer — knowledge_graph.interaction_registered
+                                     └─◀ Kafka consumer — sop.{created,updated,deleted}
 ```
 
 Two independent MCP clients talk to this server for different reasons: **slack-agent** uses the collaboration-tool and search tools during the live interview; **backend** uses only `generate_dossier`, once per completed interview, from its Kafka consumer.
+
+### Kafka
+
+`mcp-server` is a lightweight Kafka citizen, matching backend's and slack-agent's transport
+security (SASL_SSL + SCRAM-SHA-512 in the shared docker-compose broker):
+
+- **Producer:** the `add_interaction` tool publishes `knowledge_graph.interaction_registered`
+  to `slack-agent.knowledge_graph.interaction_registered` — consumed by backend's knowledge graph.
+- **Consumer:** a background task subscribes to `{prefix}.sop.created/updated/deleted`
+  (published by backend) and calls `refresh_cache()` on the SOP search connector whenever any
+  of them fires. This is purely a latency optimization on top of the existing
+  `MCP_SERVER_SOP_CACHE_TTL_SECONDS` poll, which stays in place as a backstop — if the broker is
+  unreachable or misconfigured, the server still starts and the cache just refreshes on the TTL
+  alone. See `backend/docs/asyncapi/asyncapi.yml` for the canonical event contract.
 
 ## 🚀 Local development
 

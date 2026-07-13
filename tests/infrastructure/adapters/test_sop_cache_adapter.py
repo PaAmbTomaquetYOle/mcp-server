@@ -1,6 +1,6 @@
 import pytest
 
-from mcp_server.domain.search import SearchDocument
+from mcp_server.domain.search import RelevanceScorer, SearchDocument, SynonymExpander, TokenNormalizer
 from mcp_server.infrastructure.adapters.sop_cache import InMemorySopCacheAdapter
 
 _DOC_A = SearchDocument(
@@ -29,7 +29,9 @@ _DOC_B = SearchDocument(
 
 @pytest.fixture
 def cache():
-    return InMemorySopCacheAdapter(ttl_seconds=60)
+    normalizer = TokenNormalizer()
+    scorer = RelevanceScorer(normalizer=normalizer, expander=SynonymExpander(normalizer))
+    return InMemorySopCacheAdapter(ttl_seconds=60, scorer=scorer)
 
 
 class TestSearch:
@@ -71,6 +73,39 @@ class TestSearch:
         results = await cache.search("deploy", filters={})
 
         assert len(results) == 50
+
+    @pytest.mark.anyio
+    async def test_matches_plural_query_against_singular_field(self, cache):
+        await cache.refresh([_DOC_A, _DOC_B])
+
+        results = await cache.search("deploys", filters={})
+
+        assert results == [_DOC_A]
+
+    @pytest.mark.anyio
+    async def test_matches_synonym_query(self, cache):
+        await cache.refresh([_DOC_A, _DOC_B])
+
+        results = await cache.search("release", filters={})
+
+        assert results == [_DOC_A]
+
+    @pytest.mark.anyio
+    async def test_orders_by_relevance_title_match_before_content_only_match(self, cache):
+        title_hit = _DOC_A.model_copy(update={"external_id": "title-hit"})
+        content_only_hit = _DOC_B.model_copy(
+            update={
+                "external_id": "content-hit",
+                "title": "Onboard new hire",
+                "content": "Onboarding checklist. Also involves a deploy step.",
+                "tags": [],
+            }
+        )
+        await cache.refresh([content_only_hit, title_hit])
+
+        results = await cache.search("deploy", filters={})
+
+        assert [doc.external_id for doc in results] == ["title-hit", "content-hit"]
 
 
 class TestRefresh:

@@ -50,3 +50,29 @@ class TestSearchDocumentFromSop:
         doc = SearchDocument.from_sop(_SAMPLE_SOP, base_url="https://app.example.com/sops")
 
         assert doc.description.startswith("Restart the deploy pipeline")
+
+    def test_uses_explicit_title_when_present(self):
+        sop = {**_SAMPLE_SOP, "title": "Deploy pipeline recovery"}
+
+        doc = SearchDocument.from_sop(sop, base_url="https://app.example.com/sops")
+
+        assert doc.title == "Deploy pipeline recovery"
+
+    def test_falls_back_to_first_line_when_title_missing(self):
+        doc = SearchDocument.from_sop(_SAMPLE_SOP, base_url="https://app.example.com/sops")
+
+        assert doc.title == "Restart the deploy pipeline"
+
+    def test_falls_back_to_first_line_when_title_empty(self):
+        sop = {**_SAMPLE_SOP, "title": ""}
+
+        doc = SearchDocument.from_sop(sop, base_url="https://app.example.com/sops")
+
+        assert doc.title == "Restart the deploy pipeline"
+
+    def test_truncates_explicit_title_to_80_chars(self):
+        sop = {**_SAMPLE_SOP, "title": "x" * 200}
+
+        doc = SearchDocument.from_sop(sop, base_url="https://app.example.com/sops")
+
+        assert doc.title == "x" * 80

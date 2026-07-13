@@ -2,12 +2,12 @@ import logging
 from collections.abc import Callable
 from functools import wraps
 
-from mcp.server.fastmcp.exceptions import ToolError
+from mcp.server.fastmcp.exceptions import ResourceError, ToolError
 
 from mcp_server.domain.exceptions import (
     AuthCodeExchangeException,
     BackendApiException,
-    CollaborationToolException,
+    DomainException,
     EventPublishException,
     IssueNotFoundException,
     JiraApiException,
@@ -28,7 +28,7 @@ from mcp_server.domain.exceptions import (
 
 logger = logging.getLogger(__name__)
 
-ERROR_MESSAGES: dict[type[CollaborationToolException], str] = {
+ERROR_MESSAGES: dict[type[DomainException], str] = {
     UserTokensNotFoundException: "User not authenticated. Please complete the OAuth flow first.",
     JiraAuthenticationException: "Jira authentication failed. Token may be revoked — please re-authenticate.",
     TokenRefreshException: "Failed to refresh access token. Please re-authenticate.",
@@ -58,7 +58,7 @@ def tool_error_handler(fn: Callable) -> Callable:
     async def wrapper(*args, **kwargs):
         try:
             return await fn(*args, **kwargs)
-        except CollaborationToolException as exc:
+        except DomainException as exc:
             user_message = ERROR_MESSAGES.get(type(exc), str(exc))
             logger.warning("Tool '%s' failed: %s", fn.__name__, exc)
             raise ToolError(f"{user_message} ({exc})") from exc
@@ -67,5 +67,31 @@ def tool_error_handler(fn: Callable) -> Callable:
         except Exception as exc:
             logger.exception("Unexpected error in tool '%s'", fn.__name__)
             raise ToolError(f"An unexpected error occurred: {exc}") from exc
+
+    return wrapper
+
+
+def resource_error_handler(fn: Callable) -> Callable:
+    """Decorator that catches exceptions in MCP resource handlers and raises
+    ResourceError so FastMCP surfaces them correctly to the client.
+
+    Mirrors ``tool_error_handler`` but targets the SDK's resource error model
+    (``ResourceError`` instead of ``ToolError``), since resources are read via
+    a different code path (``FastMCP.read_resource``) than tools.
+    """
+
+    @wraps(fn)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await fn(*args, **kwargs)
+        except DomainException as exc:
+            user_message = ERROR_MESSAGES.get(type(exc), str(exc))
+            logger.warning("Resource '%s' failed: %s", fn.__name__, exc)
+            raise ResourceError(f"{user_message} ({exc})") from exc
+        except ResourceError:
+            raise
+        except Exception as exc:
+            logger.exception("Unexpected error in resource '%s'", fn.__name__)
+            raise ResourceError(f"An unexpected error occurred: {exc}") from exc
 
     return wrapper

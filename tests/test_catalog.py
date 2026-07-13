@@ -11,9 +11,15 @@ from mcp_server.application.services.catalog import (
 )
 from mcp_server.infrastructure.config.settings import Settings
 
+from .conftest import TEST_TOKEN_ENCRYPTION_KEY
+
+
+def _settings() -> Settings:
+    return Settings(_env_file=None, token_encryption_key=TEST_TOKEN_ENCRYPTION_KEY)
+
 
 def test_oauth_store_tracks_pending_and_completed_sessions() -> None:
-    settings = Settings()
+    settings = _settings()
     store = OAuthMemoryStore()
 
     pending = store.generate_authorization("jira", "U123", settings)
@@ -26,7 +32,7 @@ def test_oauth_store_tracks_pending_and_completed_sessions() -> None:
 
 
 def test_search_tool_returns_matching_fixture_results() -> None:
-    server = create_mcp_server(Settings())
+    server = create_mcp_server(_settings())
     tool = server._tool_manager.get_tool("test_search_query")
 
     result = tool.fn(query="How do I handle a rollback incident?")  # pyright: ignore[reportFunctionMemberAccess]

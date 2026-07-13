@@ -20,6 +20,7 @@ class JiraAuthAdapter(IJiraAuthPort):
     __client_id: str
     __client_secret: str
     __redirect_uri: str
+    __client: AsyncClient
 
     def __init__(
         self,
@@ -27,11 +28,13 @@ class JiraAuthAdapter(IJiraAuthPort):
         client_id: str,
         client_secret: str,
         redirect_uri: str,
+        client: AsyncClient,
     ) -> None:
         self.__token_storage = token_storage_port
         self.__client_id = client_id
         self.__client_secret = client_secret
         self.__redirect_uri = redirect_uri
+        self.__client = client
 
     async def generate_auth_url(self, state: str) -> str:
         params = {
@@ -47,25 +50,24 @@ class JiraAuthAdapter(IJiraAuthPort):
 
     async def exchange_auth_code(self, code: str) -> AuthResult:
         try:
-            async with AsyncClient() as client:
-                response = await client.post(
-                    ATLASSIAN_TOKEN_URL,
-                    json={
-                        "grant_type": "authorization_code",
-                        "client_id": self.__client_id,
-                        "client_secret": self.__client_secret,
-                        "code": code,
-                        "redirect_uri": self.__redirect_uri,
-                    },
-                )
-                response.raise_for_status()
-                data: dict[str, Any] = response.json()
+            response = await self.__client.post(
+                ATLASSIAN_TOKEN_URL,
+                json={
+                    "grant_type": "authorization_code",
+                    "client_id": self.__client_id,
+                    "client_secret": self.__client_secret,
+                    "code": code,
+                    "redirect_uri": self.__redirect_uri,
+                },
+            )
+            response.raise_for_status()
+            data: dict[str, Any] = response.json()
 
-                access_token = str(data["access_token"])
-                refresh_token = str(data["refresh_token"])
-                expires_at = int(time.time()) + int(data["expires_in"])
+            access_token = str(data["access_token"])
+            refresh_token = str(data["refresh_token"])
+            expires_at = int(time.time()) + int(data["expires_in"])
 
-                email = await self._fetch_user_email(client, access_token)
+            email = await self._fetch_user_email(self.__client, access_token)
 
         except AuthCodeExchangeException:
             raise

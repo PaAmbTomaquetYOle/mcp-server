@@ -5,7 +5,8 @@ import pytest
 from mcp_server.application.ports import CacheStats
 from mcp_server.application.services.search_connector_service import SearchConnectorService
 from mcp_server.domain import BackendApiException
-from mcp_server.domain.search import SearchDocument
+from mcp_server.domain.search import RelevanceScorer, SearchDocument, SynonymExpander, TokenNormalizer
+from mcp_server.infrastructure.adapters.sop_cache import InMemorySopCacheAdapter
 
 _SOP_1 = {
     "id": "1",
@@ -111,6 +112,28 @@ class TestRefreshCache:
 
         with pytest.raises(BackendApiException):
             await service.refresh_cache()
+
+
+class TestHandleSearchWithRealCache:
+    """End-to-end through a real InMemorySopCacheAdapter, exercising tokenization + ranking."""
+
+    @pytest.fixture
+    def real_cache(self):
+        normalizer = TokenNormalizer()
+        return InMemorySopCacheAdapter(ttl_seconds=60, scorer=RelevanceScorer(normalizer, SynonymExpander(normalizer)))
+
+    @pytest.fixture
+    def service_with_real_cache(self, mock_backend_api, real_cache):
+        return SearchConnectorService(backend_api=mock_backend_api, sop_cache=real_cache, sop_base_url="https://x/sops")
+
+    @pytest.mark.anyio
+    async def test_word_form_and_ranking_flow_through(self, service_with_real_cache, real_cache):
+        await real_cache.refresh([SearchDocument.from_sop(_SOP_1, base_url="https://x/sops")])
+
+        results = await service_with_real_cache.handle_search("deploys", filters={})
+
+        assert len(results) == 1
+        assert results[0].external_id == "1"
 
 
 class TestGetStatus:

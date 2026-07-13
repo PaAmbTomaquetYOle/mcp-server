@@ -18,6 +18,7 @@ from anthropic import AsyncAnthropic
 from mcp_server.application.ports import IBackendApiPort
 from mcp_server.application.service_interfaces.dossier_generation_service_interface import (
     IDossierGenerationService,
+    ReviewScope,
 )
 from mcp_server.application.service_interfaces.search_connector_service_interface import (
     ISearchConnectorService,
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_TOOL_ITERATIONS = 4
 
-_JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*\})\s*```", re.DOTALL)
+_JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 
 _TOOLS: list[dict[str, Any]] = [
     {
@@ -59,16 +60,7 @@ _TOOLS: list[dict[str, Any]] = [
     },
 ]
 
-SYSTEM_PROMPT = """You write offboarding handover dossiers for departing employees.
-
-You receive an interview transcript (questions and answers, plus any free-form
-notes) with a departing employee. Optionally, use the available tools to pull
-extra context: `search_prior_dossiers` to look up prior dossiers, and
-`search_sops` to search the organization's SOP index for knowledge that
-relates to topics mentioned in the interview. Use tools only when they would
-materially improve the dossier; it's fine to answer without using any.
-
-When you are done, respond with ONLY a single JSON object (no prose, no
+_RESPONSE_SHAPE = """When you are done, respond with ONLY a single JSON object (no prose, no
 markdown fences) with this exact shape:
 
 {
@@ -91,6 +83,64 @@ Omit section types that don't apply given the interview content. Only include
 information actually grounded in the transcript or tool results — never
 invent contacts, tasks, or knowledge areas."""
 
+SYSTEM_PROMPT = f"""You write offboarding handover dossiers for departing employees.
+
+You receive an interview transcript (questions and answers, plus any free-form
+notes) with a departing employee. Optionally, use the available tools to pull
+extra context: `search_prior_dossiers` to look up prior dossiers, and
+`search_sops` to search the organization's SOP index for knowledge that
+relates to topics mentioned in the interview. Use tools only when they would
+materially improve the dossier; it's fine to answer without using any.
+
+{_RESPONSE_SHAPE}"""
+
+# MCP-15: monthly/annual knowledge-retention reviews get their own, differently
+# scoped prompts. Monthly is deliberately lightweight (recent activity only);
+# annual is deliberately exhaustive (everything the person has accumulated).
+SYSTEM_PROMPT_MONTHLY = f"""You write monthly knowledge-retention review dossiers for active
+employees/volunteers — this is NOT an offboarding dossier, the person is
+staying.
+
+You receive an interview transcript (questions and answers, plus any free-form
+notes) covering the person's RECENT activity over the last month. Keep the
+dossier lightweight and focused: capture only their current responsibilities
+and any tasks still pending, not an exhaustive history. Optionally, use the
+available tools to pull extra context: `search_prior_dossiers` to look up
+prior dossiers for this person, and `search_sops` to search the
+organization's SOP index for knowledge related to topics mentioned in the
+interview. Use tools only when they would materially improve the dossier;
+it's fine to answer without using any.
+
+Favor a short summary and a compact `pending_tasks`/`responsibilities`
+section over an exhaustive `knowledge_areas` listing — that belongs in the
+annual review, not here.
+
+{_RESPONSE_SHAPE}"""
+
+SYSTEM_PROMPT_ANNUAL = f"""You write annual knowledge-retention review dossiers for active
+employees/volunteers — this is NOT an offboarding dossier, the person is
+staying.
+
+You receive an interview transcript (questions and answers, plus any free-form
+notes) covering everything the person has accumulated over the past year. Be
+exhaustive: capture ALL of their areas of expertise, ongoing responsibilities,
+and relevant contact relationships — not just recent activity. This is the
+organization's deep, once-a-year record of what this person knows, so err on
+the side of including more `knowledge_areas` entries rather than fewer.
+Optionally, use the available tools to pull extra context:
+`search_prior_dossiers` to look up prior dossiers for this person, and
+`search_sops` to search the organization's SOP index for knowledge related to
+topics mentioned in the interview. Use tools only when they would materially
+improve the dossier; it's fine to answer without using any.
+
+{_RESPONSE_SHAPE}"""
+
+_SYSTEM_PROMPTS: dict[ReviewScope, str] = {
+    "offboarding": SYSTEM_PROMPT,
+    "monthly": SYSTEM_PROMPT_MONTHLY,
+    "annual": SYSTEM_PROMPT_ANNUAL,
+}
+
 
 class DossierGenerationService(IDossierGenerationService):
     """Drives an LLM, with mcp-server's own data sources as tools, to write a dossier."""
@@ -103,6 +153,7 @@ class DossierGenerationService(IDossierGenerationService):
         search_connector: ISearchConnectorService,
         max_tool_iterations: int = DEFAULT_MAX_TOOL_ITERATIONS,
         max_tokens: int = 4096,
+        max_tokens_annual: int | None = None,
     ) -> None:
         self.__client = anthropic_client
         self.__model = model
@@ -110,17 +161,23 @@ class DossierGenerationService(IDossierGenerationService):
         self.__search_connector = search_connector
         self.__max_tool_iterations = max_tool_iterations
         self.__max_tokens = max_tokens
+        # Defaults to max_tokens when not set, so callers that don't care about
+        # review scope keep the exact same budget as before MCP-15.
+        self.__max_tokens_annual = max_tokens_annual if max_tokens_annual is not None else max_tokens
 
-    async def generate(self, interview_transcript: str) -> GenerateDossierResponse:
+    async def generate(
+        self, interview_transcript: str, review_scope: ReviewScope = "offboarding"
+    ) -> GenerateDossierResponse:
         messages: list[dict[str, Any]] = [
             {"role": "user", "content": f"Interview transcript:\n\n{interview_transcript}"}
         ]
+        max_tokens = self.__max_tokens_annual if review_scope == "annual" else self.__max_tokens
 
         for _ in range(self.__max_tool_iterations):
             response = await self.__client.messages.create(
                 model=self.__model,
-                max_tokens=self.__max_tokens,
-                system=SYSTEM_PROMPT,
+                max_tokens=max_tokens,
+                system=_SYSTEM_PROMPTS[review_scope],
                 tools=_TOOLS,
                 messages=messages,
             )

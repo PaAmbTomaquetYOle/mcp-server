@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from mcp_server.application.ports import CacheStats, ISopCachePort
-from mcp_server.domain.search import SearchDocument
+from mcp_server.domain.search import RelevanceScorer, SearchDocument
 
 _MAX_RESULTS = 50
 
@@ -16,29 +16,27 @@ class InMemorySopCacheAdapter(ISopCachePort):
     __hit_count: int
     __miss_count: int
     __ttl_seconds: int
+    __scorer: RelevanceScorer
 
-    def __init__(self, ttl_seconds: int) -> None:
+    def __init__(self, ttl_seconds: int, scorer: RelevanceScorer) -> None:
         self.__documents = []
         self.__last_refresh = None
         self.__hit_count = 0
         self.__miss_count = 0
         self.__ttl_seconds = ttl_seconds
+        self.__scorer = scorer
 
     async def search(self, query: str, filters: dict[str, str]) -> list[SearchDocument]:
-        needle = query.lower()
-        matches = [doc for doc in self.__documents if self._matches(doc, needle)]
+        scored = [(self.__scorer.score(doc, query), index, doc) for index, doc in enumerate(self.__documents)]
+        matches = [(score, index, doc) for score, index, doc in scored if score > 0]
+        matches.sort(key=lambda match: (-match[0], match[1]))
 
         if matches:
             self.__hit_count += 1
         else:
             self.__miss_count += 1
 
-        return matches[:_MAX_RESULTS]
-
-    @staticmethod
-    def _matches(doc: SearchDocument, needle: str) -> bool:
-        haystacks = [doc.title, doc.content, *doc.tags]
-        return any(needle in haystack.lower() for haystack in haystacks)
+        return [doc for _, _, doc in matches[:_MAX_RESULTS]]
 
     async def refresh(self, documents: list[SearchDocument]) -> None:
         self.__documents = list(documents)

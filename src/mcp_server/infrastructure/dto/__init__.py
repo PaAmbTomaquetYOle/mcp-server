@@ -8,7 +8,8 @@ tool's API contract.
 Sub-packages mirror the controller structure:
     - ``tools``     : schemas for MCP tool controllers.
     - ``prompts``   : schemas for MCP prompt controllers (future).
-    - ``resources`` : schemas for MCP resource controllers (future).
+    - ``resources`` : schemas for MCP resource controllers (SOP-only; dossier
+      and knowledge graph resources reuse the ``tools`` schemas above).
 
 What to put here:
     - Request/response models for each MCP operation, with
@@ -19,6 +20,7 @@ What NOT to put here:
     - Domain entities or application-layer DTOs: those live in their own layers.
 """
 
+from .resources import SopDetail, SopListItem, SopListResponse
 from .tools import *
 
 __all__ = [
@@ -49,5 +51,8 @@ __all__ = [
     "SearchQueryTestResponse",
     "SlackWorkspaceSearchResponse",
     "SlackWorkspaceSearchResultItem",
+    "SopDetail",
+    "SopListItem",
+    "SopListResponse",
     "TopicInfo",
 ]
