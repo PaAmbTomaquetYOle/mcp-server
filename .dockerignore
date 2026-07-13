@@ -55,7 +55,6 @@ temp/
 # Tests and docs not needed inside the image
 tests/
 documentation/
-README.md
 LICENSE
 
 # Local token/data storage (see .gitignore's "Token storage" section)
