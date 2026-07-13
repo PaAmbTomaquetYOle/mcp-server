@@ -1,3 +1,4 @@
+import ssl
 from typing import Self
 
 from cryptography.fernet import Fernet
@@ -43,11 +44,23 @@ class McpServerSettings(BaseSettings):
     token_db_path: str = "data/tokens.db"
     token_encryption_key: str
 
-    backend_api_url: str = "http://localhost:8001/api/v1"
+    backend_api_url: str = "http://localhost:8888/api/v1"
     backend_client_id: str = ""
     backend_client_secret: str = ""
 
     kafka_bootstrap_servers: str = "localhost:9092"
+    kafka_client_id: str = "offboardme-mcp-server"
+    kafka_topic_prefix: str = "offboarding"
+    kafka_consumer_group_id: str = "mcp-server-consumer"
+    # Transport security — mirrors backend/src/app/main.py's Kafka settings.
+    # Defaults to PLAINTEXT so local dev without a broker (or a plaintext
+    # broker) is unaffected; the shared docker-compose broker requires
+    # SASL_SSL + SCRAM-SHA-512, matching backend and slack-agent.
+    kafka_security_protocol: str = "PLAINTEXT"
+    kafka_sasl_mechanism: str = "SCRAM-SHA-512"
+    kafka_sasl_username: str = ""
+    kafka_sasl_password: str = ""
+    kafka_ssl_cafile: str = ""
 
     slack_bot_token: str = ""
     slack_signing_secret: str = ""
@@ -109,3 +122,29 @@ def get_settings() -> McpServerSettings:
     """Build the MCP server settings from the current environment."""
 
     return McpServerSettings()
+
+
+def kafka_connection_kwargs(settings: McpServerSettings) -> dict:
+    """Build the security-related kwargs shared by the Kafka producer and consumer.
+
+    Mirrors backend's ``_kafka_connection_kwargs`` (src/app/main.py) so all
+    three services agree on how PLAINTEXT/SASL_SSL are configured. Defaults
+    to PLAINTEXT (no extra kwargs) so local dev/tests are unaffected.
+
+    Args:
+        settings: Application settings holding the Kafka security configuration.
+
+    Returns:
+        dict: Keyword arguments to merge into the producer/consumer constructor.
+    """
+    kwargs: dict = {"security_protocol": settings.kafka_security_protocol}
+    protocol = settings.kafka_security_protocol.upper()
+    if protocol.startswith("SASL"):
+        kwargs["sasl_mechanism"] = settings.kafka_sasl_mechanism
+        kwargs["sasl_plain_username"] = settings.kafka_sasl_username
+        kwargs["sasl_plain_password"] = settings.kafka_sasl_password
+    if protocol.endswith("SSL"):
+        kwargs["ssl_context"] = ssl.create_default_context(
+            cafile=settings.kafka_ssl_cafile or None
+        )
+    return kwargs

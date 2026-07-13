@@ -61,10 +61,26 @@ slack-agent  ──MCP client──▶  mcp-server  ◀──MCP client──  b
                                      │
                                      ├─▶ Jira / Trello / Slack APIs
                                      ├─▶ Anthropic (Claude) — generate_dossier
-                                     └─▶ backend's REST API — get_dossier, SOP search
+                                     ├─▶ backend's REST API — get_dossier, SOP search
+                                     ├─▶ Kafka producer — knowledge_graph.interaction_registered
+                                     └─◀ Kafka consumer — sop.{created,updated,deleted}
 ```
 
 Two independent MCP clients talk to this server for different reasons: **slack-agent** uses the collaboration-tool and search tools during the live interview; **backend** uses only `generate_dossier`, once per completed interview, from its Kafka consumer.
+
+### Kafka
+
+`mcp-server` is a lightweight Kafka citizen, matching backend's and slack-agent's transport
+security (SASL_SSL + SCRAM-SHA-512 in the shared docker-compose broker):
+
+- **Producer:** the `add_interaction` tool publishes `knowledge_graph.interaction_registered`
+  to `slack-agent.knowledge_graph.interaction_registered` — consumed by backend's knowledge graph.
+- **Consumer:** a background task subscribes to `{prefix}.sop.created/updated/deleted`
+  (published by backend) and calls `refresh_cache()` on the SOP search connector whenever any
+  of them fires. This is purely a latency optimization on top of the existing
+  `MCP_SERVER_SOP_CACHE_TTL_SECONDS` poll, which stays in place as a backstop — if the broker is
+  unreachable or misconfigured, the server still starts and the cache just refreshes on the TTL
+  alone. See `backend/docs/asyncapi/asyncapi.yml` for the canonical event contract.
 
 ## 🚀 Local development
 
