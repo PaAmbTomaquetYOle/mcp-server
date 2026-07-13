@@ -1,0 +1,85 @@
+# BrainTrust — mcp-server component diagram (D2)
+# Render: d2 --theme 0 --pad 40 architecture.d2 architecture.svg
+
+direction: down
+
+clients: MCP clients {
+  style.fill: "#eff6ff"
+  agent: "slack-agent — interview + collaboration/search tools"
+  be: "backend — generate_dossier only, once per completed interview"
+}
+
+controllers: infrastructure/controllers — FastMCP {
+  style.fill: "#f5f3ff"
+  style.stroke: "#7c3aed"
+  tools: "tools/ — one controller per MCP tool"
+  prompts: "prompts/ — guided multi-step flows"
+  routes: "routes/ — OAuth callback + Slack events HTTP routes"
+}
+
+services: application/services {
+  style.fill: "#f0fdf4"
+  style.stroke: "#16a34a"
+  dossier: dossier_generation_service · LLM tool-use loop
+  collab: collaboration_tool_integration_service
+  jauth: jira_auth_service
+  tauth: trello_auth_service
+  sauth: slack_auth_service
+  search: slack_workspace_search_service
+  cache: search_connector_service · SOP cache
+  kg: knowledge_graph_service
+}
+
+adapters: infrastructure/adapters {
+  style.fill: "#fff7ed"
+  style.stroke: "#c2410c"
+  jira: Jira client { icon: https://api.iconify.design/logos/jira.svg }
+  trello: Trello client { icon: https://api.iconify.design/logos/trello.svg }
+  slack: Slack client { icon: https://api.iconify.design/logos/slack-icon.svg }
+  anthropic: Anthropic (Claude) client { icon: https://api.iconify.design/logos/anthropic.svg }
+  backend_api: backend REST client · get_dossier, SOP search
+  kafka: Kafka producer/consumer adapters
+}
+
+kafka: Kafka — SASL_SSL {
+  icon: https://api.iconify.design/logos/kafka.svg
+  style.fill: "#fef9c3"
+  style.stroke: "#000000"
+  out: "knowledge_graph.interaction_registered"
+  in: "sop.created / sop.updated / sop.deleted"
+}
+
+be_backend: backend — Postgres-backed API {
+  style.fill: "#f0fdf4"
+  style.stroke: "#16a34a"
+}
+
+clients.agent -> controllers.tools: "MCP streamable-HTTP"
+clients.be -> controllers.tools: "generate_dossier"
+
+controllers.tools -> services.dossier
+controllers.tools -> services.collab
+controllers.tools -> services.jauth
+controllers.tools -> services.tauth
+controllers.tools -> services.sauth
+controllers.tools -> services.search
+controllers.tools -> services.cache
+controllers.prompts -> services.jauth
+controllers.routes -> services.jauth: "OAuth callback"
+controllers.routes -> services.sauth: "OAuth callback"
+
+services.dossier -> adapters.anthropic: "Claude tool-use loop (search_prior_dossiers, search_sops)"
+services.collab -> adapters.jira
+services.collab -> adapters.trello
+services.jauth -> adapters.jira
+services.tauth -> adapters.trello
+services.sauth -> adapters.slack
+services.search -> adapters.slack: "assistant.search.context (Real-Time Search)"
+services.cache -> adapters.backend_api: "refresh SOPs on TTL"
+services.dossier -> adapters.backend_api: "get_dossier proxy"
+services.kg -> adapters.kafka
+
+adapters.backend_api -> be_backend
+adapters.kafka -> kafka.out: "add_interaction tool"
+kafka.in -> adapters.kafka: "reactive SOP cache refresh"
+adapters.kafka -> services.cache: "refresh_cache() on sop.* event"

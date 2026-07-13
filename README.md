@@ -1,6 +1,6 @@
 <div align="center">
 
-![BrainTrust · MCP Server](https://capsule-render.vercel.app/api?type=waving&color=0:2B0B3F,50:6E56CF,100:1a1a2e&height=200&section=header&text=BrainTrust%20%C2%B7%20MCP%20Server&fontSize=44&fontColor=ffffff&desc=Tools%2C%20prompts%20%26%20the%20LLM%20dossier%20writer%20for%20the%20offboarding%20agent&descSize=17&descAlignY=62&animation=fadeIn)
+![BrainTrust · MCP Server](https://capsule-render.vercel.app/api?type=waving&color=0:2B0B3F,50:6E56CF,100:1a1a2e&height=200&section=header&text=BrainTrust%20%C2%B7%20MCP%20Server&fontSize=44&fontColor=ffffff&desc=Tools%2C%20prompts%20and%20the%20LLM%20dossier%20writer%20for%20the%20offboarding%20agent&descSize=17&descAlignY=62&animation=fadeIn&reversal=false)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.14](https://img.shields.io/badge/python-3.14-3776AB?logo=python&logoColor=white)](pyproject.toml)

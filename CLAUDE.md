@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-MCP server (built on the official Python SDK's `FastMCP`, streamable-HTTP transport) — the tool provider for **BrainTrust** (OffboardMe). Exposes Jira/Trello/Slack integrations and the `generate_dossier` LLM tool. `slack-agent` connects as an MCP client during the guided interview (collaboration + search tools); `backend`'s `LLMDossierGenerator` connects to call only `generate_dossier`, once per completed interview. See the parent `../CLAUDE.md` for cross-repo architecture and `README.md` for the full tool/prompt tables.
+MCP server (built on the official Python SDK's `FastMCP`, streamable-HTTP transport) — the tool provider for **BrainTrust**. Exposes Jira/Trello/Slack integrations and the `generate_dossier` LLM tool. `slack-agent` connects as an MCP client during the guided interview (collaboration + search tools); `backend`'s `LLMDossierGenerator` connects to call only `generate_dossier`, once per completed interview. See the parent `../CLAUDE.md` for cross-repo architecture and `README.md` for the full tool/prompt tables.
 
 ## Commands
 
