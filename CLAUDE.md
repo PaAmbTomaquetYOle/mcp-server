@@ -48,4 +48,8 @@ Jira uses OAuth 2.0 (3LO) via `generate_jira_auth_url`/`complete_jira_auth`, Tre
 
 ### SOP search cache
 
-`search_connector_service.py` maintains an in-memory cache of SOPs refreshed from backend every `MCP_SERVER_SOP_CACHE_TTL_SECONDS`. `test_search_query` queries this cache directly (used by slack-agent's question-suggestion feature) without going through Slack; `refresh_search_index` forces an immediate refresh; `get_search_analytics`/`search_connector_status` expose cache hit/miss stats and backend reachability for debugging.
+`search_connector_service.py` maintains an in-memory cache of SOPs refreshed from backend every `MCP_SERVER_SOP_CACHE_TTL_SECONDS`. `test_search_query` queries this cache directly (used by slack-agent's question-suggestion feature) without going through Slack; `refresh_search_index` forces an immediate refresh; `get_search_analytics`/`search_connector_status` expose cache hit/miss stats and backend reachability for debugging. A background Kafka consumer (`KafkaSopCacheConsumerAdapter`, wired via `ServerFactory.create_event_consumer()`) also triggers `refresh_cache()` reactively whenever backend publishes `sop.created`/`sop.updated`/`sop.deleted` — the TTL poll remains as a backstop if Kafka is unavailable.
+
+### Kafka
+
+`mcp-server` both produces and consumes: `add_interaction` (`knowledge_graph_service.py`) publishes `knowledge_graph.interaction_registered` via `KafkaEventPublisherAdapter`, and the reactive SOP-cache refresh above consumes via `KafkaSopCacheConsumerAdapter`. Both share `infrastructure/config/settings.kafka_connection_kwargs()`, which builds the same PLAINTEXT/SASL_SSL kwargs backend's `main.py` uses — the shared docker-compose broker requires SASL_SSL + SCRAM-SHA-512, so any new Kafka adapter here should go through that helper rather than constructing its own `AIOKafkaProducer`/`AIOKafkaConsumer` kwargs.
