@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 
+from aiokafka import AIOKafkaConsumer
 from anthropic import AsyncAnthropic
 from httpx2 import AsyncClient
 from mcp.server import FastMCP
@@ -9,6 +10,7 @@ from mcp.server import FastMCP
 from mcp_server.application.ports import (
     IBackendApiPort,
     IBackendTokenProvider,
+    IEventConsumerPort,
     IEventPublisherPort,
     IKnowledgeGraphPort,
     ISlackApiPort,
@@ -38,6 +40,7 @@ from mcp_server.infrastructure.adapters import (
     JiraAdapter,
     JiraAuthAdapter,
     KafkaEventPublisherAdapter,
+    KafkaSopCacheConsumerAdapter,
     KnowledgeGraphApiAdapter,
     SlackApiAdapter,
     SlackAuthAdapter,
@@ -47,7 +50,10 @@ from mcp_server.infrastructure.adapters import (
     TrelloAdapter,
     TrelloAuthAdapter,
 )
-from mcp_server.infrastructure.config.settings import McpServerSettings
+from mcp_server.infrastructure.config.settings import (
+    McpServerSettings,
+    kafka_connection_kwargs,
+)
 from mcp_server.infrastructure.controllers.prompts import (
     ExtractJiraTasksPromptController,
     ExtractTrelloTasksPromptController,
@@ -107,6 +113,7 @@ class ServerFactory:
         self._backend_token_provider: IBackendTokenProvider | None = None
         self._knowledge_graph_adapter: IKnowledgeGraphPort | None = None
         self._event_publisher_adapter: IEventPublisherPort | None = None
+        self._event_consumer: IEventConsumerPort | None = None
         self._token_storage: ITokenStoragePort | None = None
         self._oauth_http_client: AsyncClient | None = None
 
@@ -262,8 +269,38 @@ class ServerFactory:
         if self._event_publisher_adapter is None:
             self._event_publisher_adapter = KafkaEventPublisherAdapter(
                 bootstrap_servers=self._settings.kafka_bootstrap_servers,
+                client_id=self._settings.kafka_client_id,
+                connection_kwargs=kafka_connection_kwargs(self._settings),
             )
         return self._event_publisher_adapter
+
+    def create_event_consumer(self) -> IEventConsumerPort:
+        """Return the singleton reactive SOP-cache Kafka consumer.
+
+        Must be called from inside a running event loop (e.g. the async
+        server lifespan in main.py) — AIOKafkaConsumer, like AIOKafkaProducer,
+        requires one to be constructed.
+        """
+        if self._event_consumer is None:
+            prefix = self._settings.kafka_topic_prefix
+            topics = (
+                f"{prefix}.sop.created",
+                f"{prefix}.sop.updated",
+                f"{prefix}.sop.deleted",
+            )
+            consumer = AIOKafkaConsumer(
+                *topics,
+                bootstrap_servers=self._settings.kafka_bootstrap_servers,
+                client_id=self._settings.kafka_client_id,
+                group_id=self._settings.kafka_consumer_group_id,
+                enable_auto_commit=True,
+                **kafka_connection_kwargs(self._settings),
+            )
+            self._event_consumer = KafkaSopCacheConsumerAdapter(
+                consumer=consumer,
+                search_connector=self.get_search_connector_service(),
+            )
+        return self._event_consumer
 
     def _create_knowledge_graph_service(self) -> IKnowledgeGraphService:
         return KnowledgeGraphService(
@@ -307,6 +344,13 @@ class ServerFactory:
             max_tokens=self._settings.dossier_generation_max_tokens,
             max_tokens_annual=self._settings.dossier_generation_max_tokens_annual,
         )
+
+    async def close(self) -> None:
+        """Release any long-lived connections created by this factory (called on shutdown)."""
+        if self._event_publisher_adapter is not None:
+            await self._event_publisher_adapter.close()
+        if self._event_consumer is not None:
+            await self._event_consumer.stop()
 
     def get_search_connector_service(self) -> ISearchConnectorService:
         """Return the singleton search connector service, shared by tools, routes, and the cache-refresh task."""

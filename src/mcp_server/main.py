@@ -19,7 +19,23 @@ class Application:
         async def _run_with_cache_refresh() -> None:
             await self._warm_up_sop_cache(factory)
             asyncio.create_task(self._refresh_sop_cache_periodically(factory))
-            await server.run_streamable_http_async()
+
+            # Reactive refresh on top of the TTL poll above. If Kafka is
+            # unreachable/misconfigured, degrade to TTL-only rather than
+            # failing to start — the consumer is a latency optimization, not
+            # a hard dependency.
+            consumer = factory.create_event_consumer()
+            try:
+                await consumer.start()
+            except Exception:
+                logger.exception(
+                    "SOP cache Kafka consumer failed to start; relying on the TTL poll"
+                )
+
+            try:
+                await server.run_streamable_http_async()
+            finally:
+                await factory.close()
 
         anyio.run(_run_with_cache_refresh)
 
