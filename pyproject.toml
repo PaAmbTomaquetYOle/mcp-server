@@ -4,6 +4,12 @@ version = "1.0.0"
 description = "MCP server to give functionalities to the agent"
 readme = "README.md"
 requires-python = ">=3.14"
+authors = [
+    { name = "Erik Batiste" },
+    { name = "Luis Valdivieso" },
+    { name = "Oriol Orbea", email = "oriol.orbea@gmail.com" },
+    { name = "Ernest Rull" },
+]
 dependencies = [
     "aiokafka==0.14.0",
     "aiosqlite==0.22.1",
