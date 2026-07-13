@@ -5,10 +5,10 @@ description = "MCP server to give functionalities to the agent"
 readme = "README.md"
 requires-python = ">=3.14"
 authors = [
-    { name = "Erik Batiste" },
-    { name = "Luis Valdivieso" },
+    { name = "Erik Batiste", email = "erikbatiste10@gmail.com" },
+    { name = "Luis Valdivieso", email = "luisestebanvaldiviesogonzalez@gmail.com" },
     { name = "Oriol Orbea", email = "oriol.orbea@gmail.com" },
-    { name = "Ernest Rull" },
+    { name = "Ernest Rull", email = "ernestrull04@gmail.com" },
 ]
 dependencies = [
     "aiokafka==0.14.0",
